@@ -1,0 +1,24 @@
+audio:
+  sample_rate: 16000
+  fps: 25
+  duration_sec: 5.0
+  channels: 1
+  device: null
+
+mouth:
+  noise_floor: 0.01
+  scale: 0.12
+  gamma: 0.65
+  smoothing: 0.35
+
+output:
+  csv_path: outputs/logs/mic_stream_rule_demo.csv
+  show_window: false
+
+udp:
+  enabled: false
+  host: 127.0.0.1
+  port: 9000
+
+logging:
+  log_path: outputs/logs/mic_stream_rule_demo.log

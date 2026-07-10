@@ -1,0 +1,12 @@
+dataset:
+  output_dir: data/synthetic_mouth
+  num_samples: 40
+  frames_per_sample: 96
+  train_ratio: 0.8
+  seed: 42
+audio:
+  sample_rate: 16000
+  fps: 25
+  frame_ms: 40
+features:
+  feature_dim: 70

@@ -1,0 +1,7 @@
+checkpoint:
+  path: outputs/checkpoints/mlp_mouth.pt
+onnx:
+  output_path: outputs/models/mlp_mouth.onnx
+  opset: 12
+logging:
+  log_path: outputs/logs/export_onnx.log

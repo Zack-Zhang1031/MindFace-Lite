@@ -1,0 +1,30 @@
+# Optional packages. Install only when needed in the Windows training env.
+# Do not install this file in the WSL RKNN env `mindface-rknn`.
+# RKNN-Toolkit2 2.3.2 needs numpy<=1.26.4, while mediapipe may install
+# opencv-contrib-python and upgrade numpy to 2.x on Linux.
+#
+# Keep numpy/OpenCV in the 1.x/4.x line for this educational project.
+# OpenCV-Contrib 5.x is intentionally blocked because it may force numpy 2.x
+# and break the RKNN environment if installed there by mistake.
+
+numpy>=1.26.4,<2.0
+opencv-contrib-python==4.11.0.86
+
+# librosa/soundfile: better audio features for real datasets
+librosa>=0.11,<0.12
+soundfile>=0.13,<0.15
+
+# pyttsx3: offline OS TTS. If unavailable, scripts use pseudo TTS fallback.
+pyttsx3>=2.99,<3.0
+
+# edge-tts: online neural TTS backend. Requires ffmpeg to convert MP3 to WAV.
+edge-tts>=7.0,<8.0
+
+# sounddevice: microphone streaming input.
+sounddevice>=0.5,<0.6
+
+# mediapipe: GRID video landmark extraction, optional and heavier.
+mediapipe>=0.10.35,<0.11
+
+# rknn-toolkit2 is installed from Rockchip-specific wheels in the RKNN dev environment.
+# It is intentionally not pinned here because the package source depends on board/BSP setup.

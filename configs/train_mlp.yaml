@@ -1,0 +1,23 @@
+dataset:
+  dir: data/synthetic_mouth
+features:
+  fps: 25
+  frame_ms: 40
+model:
+  type: mlp
+  params:
+    input_dim: 70
+    hidden_dim: 128
+    output_dim: 3
+    dropout: 0.05
+train:
+  seed: 42
+  device: auto
+  epochs: 3
+  batch_size: 64
+  lr: 0.001
+  num_workers: 0
+output:
+  checkpoint_path: outputs/checkpoints/mlp_mouth.pt
+  log_path: outputs/logs/train_mlp.log
+  experiment_root: outputs/experiments

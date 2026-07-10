@@ -1,0 +1,40 @@
+asset:
+  image_path: assets/avatar/stage1_6_static_face.png
+  prompt_path: assets/avatar/stage1_6_static_face.prompt.txt
+
+audio:
+  input_path: outputs/audio/test_voice.wav
+  fps: 25
+  frame_ms: 40
+
+mouth:
+  noise_floor: 0.01
+  gamma: 0.65
+  smoothing: 0.35
+
+mouth_roi:
+  center_x: 0.50
+  center_y: 0.598
+  width: 0.26
+  height: 0.13
+  max_open_ratio: 0.070
+
+expressive:
+  head_bob_px: 4.0
+  cheek_pulse: true
+
+video:
+  output_path: outputs/videos/expressive_avatar_demo.mp4
+  width: 768
+  height: 768
+  show_roi_debug: false
+
+preview:
+  output_path: outputs/videos/expressive_avatar_preview.png
+  frame_index: 48
+
+csv:
+  output_path: outputs/logs/expressive_avatar_demo.csv
+
+logging:
+  log_path: outputs/logs/expressive_avatar_demo.log

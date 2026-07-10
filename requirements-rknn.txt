@@ -1,0 +1,22 @@
+# WSL / Ubuntu RKNN conversion environment dependencies.
+# Use inside ~/.venvs/mindface-rknn, not in the Windows conda training env.
+# System packages still need apt:
+#   sudo apt install device-tree-compiler gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+numpy==1.26.4
+setuptools==80.9.0
+pyyaml==6.0.3
+opencv-python==4.11.0.86
+onnx==1.22.0
+onnxruntime==1.26.0
+protobuf==4.25.4
+
+# RKNN-Toolkit2 conversion SDK for Ubuntu/Linux x86_64.
+# This has been verified in WSL Ubuntu with Python 3.12.
+rknn-toolkit2==2.3.2
+
+# Do not install requirements-optional.txt in this RKNN environment.
+# In particular, mediapipe/opencv-contrib-python can upgrade numpy to 2.x,
+# while RKNN-Toolkit2 2.3.2 requires numpy<=1.26.4.
+# RKNN-Toolkit2 also imports pkg_resources, which was removed from newer
+# setuptools releases; keep setuptools pinned below 81.

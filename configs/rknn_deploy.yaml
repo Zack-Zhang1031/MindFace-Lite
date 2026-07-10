@@ -1,0 +1,26 @@
+model:
+  onnx_path: outputs/models/mlp_mouth.onnx
+  rknn_path: outputs/models/mlp_mouth.rk3588.rknn
+  target_platform: rk3588
+
+quantization:
+  enabled: false
+  dataset_path: null
+  auto_create_dummy_dataset: true
+  dummy_dataset_dir: outputs/rknn_calibration
+  dummy_samples: 16
+
+input:
+  frames: 16
+  feature_dim: 70
+
+runtime:
+  verbose: false
+  run_inference: false
+  target: null
+
+output:
+  report_path: outputs/reports/rknn_deploy_report.json
+
+logging:
+  log_path: outputs/logs/rknn_convert.log

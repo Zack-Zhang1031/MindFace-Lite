@@ -1,0 +1,9 @@
+onnx:
+  input_path: outputs/models/grid_mlp_mouth.onnx
+  output_path: outputs/models/grid_mlp_mouth.int8.dynamic.onnx
+quantization:
+  method: dynamic
+  weight_type: qint8
+  per_channel: false
+logging:
+  log_path: outputs/logs/quantize_grid_onnx.log

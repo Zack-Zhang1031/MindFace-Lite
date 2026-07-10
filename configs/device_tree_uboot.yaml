@@ -1,0 +1,11 @@
+device_tree:
+  dts_path: tools/embedded/rk3588-mouth-uart-overlay.dts
+  dtbo_path: outputs/embedded/rk3588-mouth-uart-overlay.dtbo
+
+uboot:
+  dtb_name: rk3588-board.dtb
+  overlay_name: rk3588-mouth-uart-overlay.dtbo
+  boot_partition: "1:1"
+
+logging:
+  log_path: outputs/logs/device_tree_uboot_check.log

@@ -1,0 +1,7 @@
+checkpoint:
+  path: outputs/checkpoints/grid_mlp_mouth.pt
+onnx:
+  output_path: outputs/models/grid_mlp_mouth.onnx
+  opset: 12
+logging:
+  log_path: outputs/logs/export_grid_onnx.log

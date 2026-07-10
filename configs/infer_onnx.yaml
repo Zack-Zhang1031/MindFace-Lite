@@ -1,0 +1,17 @@
+audio:
+  input_path: outputs/audio/test_voice.wav
+  fps: 25
+  frame_ms: 40
+onnx:
+  path: outputs/models/mlp_mouth.onnx
+  model_type: mlp
+inference:
+  smooth_alpha: 0.65
+video:
+  output_path: outputs/videos/onnx_mlp_demo.mp4
+  width: 512
+  height: 512
+csv:
+  output_path: outputs/logs/onnx_mlp_params.csv
+logging:
+  log_path: outputs/logs/infer_onnx.log

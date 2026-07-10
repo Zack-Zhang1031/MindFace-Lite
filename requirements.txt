@@ -1,0 +1,22 @@
+# Windows / training environment dependencies.
+# Use this in the Windows conda env `mindface-lite`.
+# Do not use this file for the WSL RKNN conversion env; use requirements-rknn.txt there.
+#
+# Why not "latest everything"?
+# RKNN-Toolkit2 2.3.2 still requires numpy<=1.26.4 and torch<=2.4.0 in its own env,
+# while newer MediaPipe/OpenCV-Contrib packages may prefer numpy 2.x on Linux.
+# Keep training/media/RKNN as separate environments.
+
+numpy>=1.26.4,<2.0
+opencv-python==4.11.0.86
+pyyaml>=6.0.3,<7.0
+pandas>=2.2,<3.0
+matplotlib>=3.9,<4.0
+tqdm>=4.66,<5.0
+
+# CUDA PyTorch for NVIDIA GPU training. This project was configured on RTX 4080.
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0+cu128
+
+onnx>=1.22,<1.23
+onnxruntime>=1.26,<1.27

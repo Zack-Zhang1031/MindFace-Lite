@@ -1,0 +1,17 @@
+audio:
+  input_path: outputs/audio/test_voice.wav
+  sample_rate: 16000
+  fps: 25
+  frame_ms: 40
+mouth:
+  noise_floor: 0.01
+  gamma: 0.65
+  smoothing: 0.35
+video:
+  output_path: outputs/videos/rule_mouth_demo.mp4
+  width: 512
+  height: 512
+csv:
+  output_path: outputs/logs/rule_demo.csv
+logging:
+  log_path: outputs/logs/rule_demo.log

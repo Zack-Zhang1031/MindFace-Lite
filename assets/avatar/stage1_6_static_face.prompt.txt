@@ -1,0 +1,9 @@
+Use case: stylized-concept
+Asset type: project avatar source image for an OpenCV mouth-warp demo
+Primary request: create a front-facing static 2D digital human avatar face with a neutral closed mouth, centered and symmetrical, suitable for local mouth-region deformation.
+Style/medium: polished clean 2D illustration, educational engineering demo asset, slightly realistic cartoon avatar.
+Composition/framing: square portrait, head and neck visible, face centered, mouth clearly visible and unobstructed, neutral expression, closed lips, eyes open, no teeth visible.
+Lighting/mood: soft studio lighting, gentle facial shading.
+Color palette: natural warm skin tones, dark hair, simple light neutral background.
+Constraints: no text, no watermark, no logo, no accessories covering the mouth, no open mouth, no facial hair, mouth area clean and easy to warp.
+

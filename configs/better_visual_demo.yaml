@@ -1,0 +1,18 @@
+audio:
+  input_path: outputs/audio/test_voice.wav
+  fps: 25
+  frame_ms: 40
+mouth:
+  noise_floor: 0.01
+  gamma: 0.65
+  smoothing: 0.35
+video:
+  output_path: outputs/videos/better_visual_mouth_demo.mp4
+  width: 768
+  height: 768
+  show_debug_overlay: false
+csv:
+  output_path: outputs/logs/better_visual_rule_demo.csv
+logging:
+  log_path: outputs/logs/better_visual_demo.log
+

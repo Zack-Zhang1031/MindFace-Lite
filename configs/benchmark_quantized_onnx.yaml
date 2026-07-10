@@ -1,0 +1,14 @@
+onnx:
+  fp32_path: outputs/models/mlp_mouth.onnx
+  int8_path: outputs/models/mlp_mouth.int8.dynamic.onnx
+  model_type: mlp
+benchmark:
+  feature_dim: 70
+  frames: 256
+  warmup: 10
+  repeat: 100
+  seed: 42
+output:
+  report_path: outputs/reports/quantized_onnx_benchmark.json
+logging:
+  log_path: outputs/logs/benchmark_quantized_onnx.log

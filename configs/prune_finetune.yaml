@@ -1,0 +1,17 @@
+checkpoint:
+  input_path: outputs/checkpoints/grid_mlp_mouth.pt
+  output_path: outputs/checkpoints/grid_mlp_mouth.pruned.pt
+dataset:
+  dir: data/processed/grid_mouth
+pruning:
+  method: l1_unstructured
+  amount: 0.30
+train:
+  seed: 42
+  device: cuda
+  epochs: 2
+  batch_size: 256
+  lr: 0.0001
+  num_workers: 0
+logging:
+  log_path: outputs/logs/prune_finetune.log

@@ -1,0 +1,11 @@
+audio:
+  input_path: outputs/audio/test_voice.wav
+  fps: 25
+  frame_ms: 40
+realtime:
+  sleep_like_realtime: false
+output:
+  csv_path: outputs/logs/realtime_rule_queue.csv
+  report_path: outputs/reports/realtime_rule_report.json
+logging:
+  log_path: outputs/logs/realtime_rule.log
