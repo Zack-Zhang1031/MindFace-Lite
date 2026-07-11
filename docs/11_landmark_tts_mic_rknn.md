@@ -114,6 +114,30 @@ python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_la
 - `mouth_width`：嘴角距离，按脸宽归一化。
 - `mouth_round`：嘴部纵横比，表示圆唇程度。
 
+## 使用 Landmark 标签训练
+
+完成 `data/processed/grid_video_landmarks` 后，可以把视频 landmark 标签和原始 WAV 音频对齐成训练集：
+
+```powershell
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml --max-samples 8
+```
+
+确认小样本输出没问题后，跑全量：
+
+```powershell
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml
+python scripts/03_train_model.py --config configs/train_grid_landmark_mlp.yaml
+```
+
+输出：
+
+```text
+data/processed/grid_landmark_mouth/manifest.csv
+outputs/checkpoints/grid_landmark_mlp_mouth.pt
+```
+
+这条路径和 `scripts/09_prepare_grid_dataset.py` 不同：`09` 使用 RMS 规则伪标签，`16` 使用视频 landmark 生成的 `mouth_open/mouth_width/mouth_round` 作为监督标签。
+
 ## 真实 TTS
 
 只生成 WAV：

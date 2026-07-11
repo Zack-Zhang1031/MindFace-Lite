@@ -1,0 +1,31 @@
+audio:
+  input_path: outputs/audio/test_voice.wav
+  fps: 25
+  frame_ms: 40
+
+checkpoint:
+  path: outputs/checkpoints/mlp_mouth.pt
+
+pytorch:
+  device: cpu
+
+onnx:
+  path: outputs/models/mlp_mouth.onnx
+  auto_export: true
+  opset: 12
+
+rknn:
+  enabled: true
+  path: outputs/models/mlp_mouth.rk3588.rknn
+  frames: 16
+  runtime_target: null
+
+compare:
+  max_frames: 64
+
+output:
+  report_path: outputs/reports/backend_consistency_report.json
+
+logging:
+  log_path: outputs/logs/consistency_compare.log
+

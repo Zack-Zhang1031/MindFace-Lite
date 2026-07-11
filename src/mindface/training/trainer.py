@@ -9,7 +9,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from mindface.data.synthetic_dataset import SyntheticMouthDataset
+from mindface.data.synthetic_dataset import MouthParameterDataset
 from mindface.experiments.tracking import (
     base_runtime_info,
     make_experiment_dir,
@@ -86,8 +86,8 @@ def train_from_config(cfg: dict, logger) -> Path:
     device = resolve_device(str(train_cfg.get("device", "auto")))
 
     dataset_dir = resolve_path(cfg["dataset"]["dir"])
-    train_ds = SyntheticMouthDataset(dataset_dir, split="train", sequence_mode=sequence_mode)
-    val_ds = SyntheticMouthDataset(dataset_dir, split="val", sequence_mode=sequence_mode)
+    train_ds = MouthParameterDataset(dataset_dir, split="train", sequence_mode=sequence_mode)
+    val_ds = MouthParameterDataset(dataset_dir, split="val", sequence_mode=sequence_mode)
     train_loader = DataLoader(
         train_ds,
         batch_size=int(train_cfg.get("batch_size", 32)),

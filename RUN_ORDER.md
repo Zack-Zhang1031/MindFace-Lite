@@ -19,6 +19,7 @@ python -m pip install -e .
 
 ```powershell
 python -m pip install -r requirements-optional.txt
+python -m pip install -r requirements-dev.txt
 ```
 
 依赖文件不会无脑追最新版本。`requirements.txt` / `requirements-optional.txt` 会保持 `numpy<2.0`，并固定 OpenCV `4.11.0.86`，避免 `opencv-contrib-python 5.x` 把环境升级到 NumPy 2.x。MediaPipe、TTS、麦克风建议在 Windows `mindface-lite` 环境运行；RKNN 仍然使用单独的 `requirements-rknn.txt`。
@@ -43,6 +44,12 @@ python -m pip check
 python scripts/99_health_check.py
 ```
 
+统一 CLI 等价命令：
+
+```powershell
+python -m mindface health
+```
+
 输出：
 
 ```text
@@ -58,7 +65,7 @@ python scripts/run_00_basic_pipeline.py
 python scripts/15_verify_basic_outputs.py
 ```
 
-当前基础 pipeline 会跑规则 demo、Stage 1.5 better visual renderer、Stage 1.6 expressive static avatar、基础训练、推理、ONNX 导出、ONNXRuntime、实时队列、benchmark，并默认加入 ONNX INT8 动态量化和量化 benchmark。
+当前基础 pipeline 会跑规则 demo、Stage 1.5 better visual renderer、Stage 1.6 expressive static avatar、基础训练、推理、ONNX 导出、ONNXRuntime、PyTorch/ONNX/RKNN 可选一致性对比、实时队列、benchmark，并默认加入 ONNX INT8 动态量化和量化 benchmark。
 
 可选参数：
 
@@ -70,6 +77,17 @@ python scripts/run_00_basic_pipeline.py --check-optional-deps-only
 ```
 
 注意：这个基础 pipeline 不会预处理或训练全量 GRID 数据。`--include-grid-compression` 只会使用已经训练好的 GRID checkpoint 做导出、量化、剪枝和 benchmark。
+
+如果想用统一 CLI 手动跑关键阶段：
+
+```powershell
+python -m mindface rule-demo
+python -m mindface better-visual
+python -m mindface expressive-avatar
+python -m mindface train --config configs/train_mlp.yaml
+python -m mindface export-onnx --config configs/export_onnx.yaml
+python -m mindface compare-backends
+```
 
 ## 3. 手动运行基础 Pipeline
 
@@ -125,6 +143,45 @@ python scripts/03_train_model.py --config configs/train_grid_mlp.yaml
 
 当前标签是基于 RMS 规则生成的伪嘴型标签。真正的视频嘴型标签需要后续实现 landmark / blendshape 提取。
 
+## 6.5 GRID Landmark 真实标签预处理和训练
+
+这一步需要真实数据存在：
+
+```text
+data/raw/grid/audio
+data/raw/grid/video
+```
+
+先提取视频 landmark：
+
+```powershell
+python scripts/14_extract_grid_video_landmarks.py --check-deps
+python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml --max-videos 8 --output-dir data/processed/grid_video_landmarks_debug
+python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml
+```
+
+再把 `data/processed/grid_video_landmarks` 中的 target 和 `data/raw/grid/audio` 中的 WAV 对齐成训练集：
+
+```powershell
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml --max-samples 8
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml
+```
+
+训练真正以 landmark 参数为监督的 MLP：
+
+```powershell
+python scripts/03_train_model.py --config configs/train_grid_landmark_mlp.yaml
+```
+
+输出：
+
+```text
+data/processed/grid_landmark_mouth/manifest.csv
+outputs/checkpoints/grid_landmark_mlp_mouth.pt
+```
+
+如果当前项目目录没有 `data/raw/grid`，这一步不能真实训练，会提示缺少 GRID 数据目录。
+
 ## 7. 量化与剪枝
 
 ONNX INT8 动态量化和对比 benchmark：
@@ -147,6 +204,18 @@ PyTorch 剪枝、fine-tune 和对比 benchmark：
 ```powershell
 python scripts/12_prune_finetune.py --config configs/prune_finetune.yaml
 python scripts/13_benchmark_pruned.py --config configs/benchmark_pruned.yaml
+```
+
+PyTorch、ONNXRuntime、RKNN 可选一致性对比：
+
+```powershell
+python scripts/17_compare_inference_backends.py --config configs/consistency_compare.yaml
+```
+
+报告：
+
+```text
+outputs/reports/backend_consistency_report.json
 ```
 
 ## 8. GRID 视频 Landmark 标签
@@ -247,3 +316,11 @@ build\cpp\queue_demo.exe
 build\cpp\udp_sender.exe outputs\logs\pytorch_mlp_params.csv 127.0.0.1 9000 25
 build\cpp\serial_sender.exe outputs\logs\serial_output.txt outputs\logs\pytorch_mlp_params.csv 25
 ```
+
+## 13. 自动测试
+
+```powershell
+python -m pytest
+```
+
+测试覆盖音频 RMS、manifest 数据集、GRID landmark 预处理小样本、Stage 1.6 渲染器和后端误差计算。

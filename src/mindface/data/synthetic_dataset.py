@@ -9,8 +9,8 @@ from torch.utils.data import Dataset
 from mindface.utils.config import resolve_path
 
 
-class SyntheticMouthDataset(Dataset):
-    """Synthetic audio-feature to mouth-parameter dataset.
+class MouthParameterDataset(Dataset):
+    """Manifest-based audio-feature to mouth-parameter dataset.
 
     For MLP training, sequence_mode=False returns individual frames.
     For LSTM/TCN/Transformer training, sequence_mode=True returns full sequences.
@@ -67,3 +67,7 @@ class SyntheticMouthDataset(Dataset):
         sample_idx, frame_idx = self.frame_index[idx]
         features, targets = self._load_sample(sample_idx)
         return features[frame_idx], targets[frame_idx]
+
+
+# Backward-compatible name used by earlier stages and older docs.
+SyntheticMouthDataset = MouthParameterDataset

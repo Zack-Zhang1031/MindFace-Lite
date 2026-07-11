@@ -1,0 +1,16 @@
+raw_grid_dir: data/raw/grid
+landmark_dir: data/processed/grid_video_landmarks
+output_dir: data/processed/grid_landmark_mouth
+max_samples: null
+min_detection_rate: 0.95
+
+features:
+  fps: 25
+  frame_ms: 40
+  feature_dim: 70
+
+output:
+  overwrite: true
+  manifest_name: manifest.csv
+  log_path: outputs/logs/prepare_grid_landmark.log
+

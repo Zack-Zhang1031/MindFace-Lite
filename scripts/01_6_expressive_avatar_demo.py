@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import sys
 from pathlib import Path
 
@@ -12,7 +13,6 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from mindface.audio.features import compute_rms, frame_times, read_wav_mono, rms_to_mouth_open
 from mindface.utils.config import load_yaml, resolve_path
-from mindface.utils.csv_io import write_rule_csv
 from mindface.utils.logger import setup_logger
 from mindface.visual.static_avatar_warper import (
     load_avatar_config,
@@ -22,6 +22,78 @@ from mindface.visual.static_avatar_warper import (
 )
 
 
+def _viseme_for_time(time_sec: float, events: list[dict]) -> str:
+    for event in events:
+        if float(event["start"]) <= time_sec < float(event["end"]):
+            return str(event["shape"]).lower()
+    return "neutral"
+
+
+def _build_expressive_params(mouth_open: np.ndarray, times: np.ndarray, cfg: dict) -> tuple[np.ndarray, list[str]]:
+    viseme_cfg = cfg.get("viseme", {})
+    events = viseme_cfg.get("events", []) if viseme_cfg.get("enabled", False) else []
+
+    params = np.zeros((len(mouth_open), 3), dtype=np.float32)
+    labels: list[str] = []
+    for idx, (base_open, time_sec) in enumerate(zip(mouth_open, times)):
+        shape = _viseme_for_time(float(time_sec), events)
+        open_value = float(base_open)
+        mouth_width = float(np.clip(0.48 + 0.18 * open_value, 0.0, 1.0))
+        lip_round = float(np.clip(0.18 + 0.20 * open_value, 0.0, 1.0))
+
+        if shape == "closed":
+            open_value = min(open_value * 0.08, 0.025)
+            mouth_width = 0.48
+            lip_round = 0.08
+        elif shape == "a":
+            open_value = max(open_value, 0.68)
+            mouth_width = 0.58
+            lip_round = 0.12
+        elif shape == "i":
+            open_value = min(1.0, max(open_value * 0.55, 0.16))
+            mouth_width = 0.96
+            lip_round = 0.04
+        elif shape == "o":
+            open_value = max(open_value, 0.48)
+            mouth_width = 0.36
+            lip_round = 0.92
+        elif shape == "u":
+            open_value = max(open_value, 0.34)
+            mouth_width = 0.26
+            lip_round = 1.0
+
+        params[idx] = [np.clip(open_value, 0.0, 1.0), mouth_width, lip_round]
+        labels.append(shape)
+    return params, labels
+
+
+def _write_expressive_csv(
+    output_path: str | Path,
+    times: np.ndarray,
+    rms: np.ndarray,
+    params: np.ndarray,
+    viseme_labels: list[str],
+) -> Path:
+    resolved = resolve_path(output_path)
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    with resolved.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["frame_index", "time_sec", "rms", "mouth_open", "mouth_width", "lip_round", "viseme"])
+        for frame_index, (time_sec, rms_value, row, viseme) in enumerate(zip(times, rms, params, viseme_labels)):
+            writer.writerow(
+                [
+                    frame_index,
+                    f"{float(time_sec):.6f}",
+                    f"{float(rms_value):.8f}",
+                    f"{float(row[0]):.6f}",
+                    f"{float(row[1]):.6f}",
+                    f"{float(row[2]):.6f}",
+                    viseme,
+                ]
+            )
+    return resolved
+
+
 def _save_preview_frame(cfg: dict, params: np.ndarray, avatar_cfg) -> Path:
     preview_cfg = cfg.get("preview", {})
     output_path = resolve_path(preview_cfg.get("output_path", "outputs/videos/expressive_avatar_preview.png"))
@@ -29,7 +101,14 @@ def _save_preview_frame(cfg: dict, params: np.ndarray, avatar_cfg) -> Path:
     frame_index = max(0, min(frame_index, len(params) - 1))
     base = load_static_avatar(avatar_cfg.image_path, avatar_cfg.width, avatar_cfg.height)
     row = params[frame_index]
-    frame = render_static_avatar_frame(base, float(row[0]), config=avatar_cfg)
+    frame = render_static_avatar_frame(
+        base,
+        float(row[0]),
+        float(row[1]) if row.shape[0] > 1 else 0.55,
+        float(row[2]) if row.shape[0] > 2 else 0.25,
+        config=avatar_cfg,
+        frame_index=frame_index,
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(output_path), frame)
     return output_path
@@ -55,6 +134,8 @@ def main() -> None:
             mouth_roi=avatar_cfg.mouth_roi,
             head_bob_px=avatar_cfg.head_bob_px,
             cheek_pulse=avatar_cfg.cheek_pulse,
+            blink_interval_frames=avatar_cfg.blink_interval_frames,
+            blink_duration_frames=avatar_cfg.blink_duration_frames,
             show_roi_debug=True,
         )
 
@@ -72,11 +153,11 @@ def main() -> None:
         smoothing=float(cfg["mouth"]["smoothing"]),
     )
     times = frame_times(len(rms), fps)
-    params = np.stack([mouth_open], axis=1)
+    params, viseme_labels = _build_expressive_params(mouth_open, times, cfg)
 
     csv_path = args.output_csv if args.output_csv is not None else cfg["csv"]["output_path"]
     video_path = args.output_video if args.output_video is not None else cfg["video"]["output_path"]
-    write_rule_csv(csv_path, times, rms, mouth_open)
+    csv_resolved = _write_expressive_csv(csv_path, times, rms, params, viseme_labels)
     params_to_static_avatar_video(params, video_path, avatar_cfg, fps=fps)
     preview_path = _save_preview_frame(cfg, params, avatar_cfg)
 
@@ -91,11 +172,10 @@ def main() -> None:
         mouth_open.max(),
     )
     print(f"Avatar: {avatar_cfg.image_path}")
-    print(f"CSV: {resolve_path(csv_path)}")
+    print(f"CSV: {csv_resolved}")
     print(f"Video: {resolve_path(video_path)}")
     print(f"Preview: {preview_path}")
 
 
 if __name__ == "__main__":
     main()
-

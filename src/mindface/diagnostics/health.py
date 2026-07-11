@@ -80,6 +80,7 @@ def check_imports() -> list[CheckResult]:
         ("edge_tts", "edge-tts", False),
         ("sounddevice", "sounddevice", False),
         ("rknn", "rknn-toolkit2", False),
+        ("pytest", "pytest", False),
     ]
     results: list[CheckResult] = []
     for module_name, package_name, required in packages:
@@ -186,20 +187,27 @@ def check_torch_cuda() -> CheckResult:
 def check_project_paths() -> list[CheckResult]:
     paths = [
         ("requirements", "requirements.txt", True),
+        ("requirements_dev", "requirements-dev.txt", False),
         ("requirements_optional", "requirements-optional.txt", False),
         ("requirements_rknn", "requirements-rknn.txt", False),
+        ("pyproject", "pyproject.toml", True),
         ("rule_config", "configs/rule_demo.yaml", True),
         ("expressive_avatar_config", "configs/expressive_avatar_demo.yaml", True),
         ("expressive_avatar_asset", "assets/avatar/stage1_6_static_face.png", True),
         ("train_config", "configs/train_mlp.yaml", True),
         ("grid_train_config", "configs/train_grid_mlp.yaml", False),
+        ("grid_landmark_prepare_config", "configs/prepare_grid_landmark.yaml", False),
+        ("grid_landmark_train_config", "configs/train_grid_landmark_mlp.yaml", False),
+        ("consistency_config", "configs/consistency_compare.yaml", False),
         ("rknn_config", "configs/rknn_deploy.yaml", False),
+        ("project_demo", "PROJECT_DEMO.md", False),
         ("test_audio", "outputs/audio/test_voice.wav", False),
         ("rule_video", "outputs/videos/rule_mouth_demo.mp4", False),
         ("better_visual_video", "outputs/videos/better_visual_mouth_demo.mp4", False),
         ("expressive_avatar_video", "outputs/videos/expressive_avatar_demo.mp4", False),
         ("mlp_checkpoint", "outputs/checkpoints/mlp_mouth.pt", False),
         ("mlp_onnx", "outputs/models/mlp_mouth.onnx", False),
+        ("backend_consistency_report", "outputs/reports/backend_consistency_report.json", False),
         ("mlp_rknn", "outputs/models/mlp_mouth.rk3588.rknn", False),
     ]
     results: list[CheckResult] = []
@@ -222,6 +230,7 @@ def check_grid_data() -> list[CheckResult]:
     manifests = [
         ("grid_audio_manifest", "data/processed/grid_mouth/manifest.csv"),
         ("grid_video_landmark_manifest", "data/processed/grid_video_landmarks/manifest.csv"),
+        ("grid_landmark_supervised_manifest", "data/processed/grid_landmark_mouth/manifest.csv"),
     ]
     for name, rel_path in manifests:
         path = resolve_path(rel_path)

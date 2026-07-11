@@ -29,6 +29,8 @@ class ExpressiveAvatarConfig:
     mouth_roi: MouthRoi = MouthRoi()
     head_bob_px: float = 5.0
     cheek_pulse: bool = True
+    blink_interval_frames: int = 75
+    blink_duration_frames: int = 5
     show_roi_debug: bool = False
 
 
@@ -50,6 +52,8 @@ def load_avatar_config(cfg: dict) -> ExpressiveAvatarConfig:
         ),
         head_bob_px=float(expressive_cfg.get("head_bob_px", 5.0)),
         cheek_pulse=bool(expressive_cfg.get("cheek_pulse", True)),
+        blink_interval_frames=int(expressive_cfg.get("blink_interval_frames", 75)),
+        blink_duration_frames=int(expressive_cfg.get("blink_duration_frames", 5)),
         show_roi_debug=bool(video_cfg.get("show_roi_debug", False)),
     )
 
@@ -91,24 +95,97 @@ def _soft_mask(shape: tuple[int, int], power: float = 2.2) -> np.ndarray:
     return cv2.GaussianBlur(mask, (0, 0), sigmaX=max(1.0, w * 0.025))
 
 
-def _warp_mouth_roi(roi_image: np.ndarray, mouth_open: float, mouth_width: float, lip_round: float) -> np.ndarray:
+def _affine_triangle(src: np.ndarray, dst: np.ndarray, src_tri: np.ndarray, dst_tri: np.ndarray) -> None:
+    src_rect = cv2.boundingRect(src_tri.astype(np.float32))
+    dst_rect = cv2.boundingRect(dst_tri.astype(np.float32))
+    sx, sy, sw, sh = src_rect
+    dx, dy, dw, dh = dst_rect
+    if sw <= 0 or sh <= 0 or dw <= 0 or dh <= 0:
+        return
+
+    src_crop = src[sy : sy + sh, sx : sx + sw]
+    src_local = src_tri.astype(np.float32) - np.asarray([sx, sy], dtype=np.float32)
+    dst_local = dst_tri.astype(np.float32) - np.asarray([dx, dy], dtype=np.float32)
+    matrix = cv2.getAffineTransform(src_local, dst_local)
+    warped = cv2.warpAffine(
+        src_crop,
+        matrix,
+        (dw, dh),
+        flags=cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_REFLECT_101,
+    )
+    mask = np.zeros((dh, dw), dtype=np.float32)
+    cv2.fillConvexPoly(mask, np.int32(dst_local), 1.0, cv2.LINE_AA)
+    mask = mask[:, :, None]
+    dst_region = dst[dy : dy + dh, dx : dx + dw].astype(np.float32)
+    dst[dy : dy + dh, dx : dx + dw] = np.clip(dst_region * (1.0 - mask) + warped.astype(np.float32) * mask, 0, 255)
+
+
+def _warp_mouth_roi_mesh(roi_image: np.ndarray, mouth_open: float, mouth_width: float, lip_round: float) -> np.ndarray:
     h, w = roi_image.shape[:2]
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    center_y = h * 0.52
-    center_x = w * 0.50
-    nx = (xx - center_x) / max(w * 0.5, 1.0)
-    ny = (yy - center_y) / max(h * 0.5, 1.0)
+    cx = w * 0.50
+    cy = h * 0.52
+    open_delta = mouth_open * h * (0.10 + 0.26 * lip_round)
+    side_delta = mouth_open * w * (0.02 + 0.05 * mouth_width)
+    round_in = mouth_open * lip_round * w * 0.045
+    wide_out = mouth_open * mouth_width * w * 0.025
 
-    ellipse = np.exp(-((nx / 0.82) ** 2 + (ny / 0.72) ** 2) * 2.2).astype(np.float32)
-    vertical_delta = mouth_open * (h * (0.10 + 0.34 * lip_round))
-    horizontal_gain = mouth_open * (0.04 + 0.10 * mouth_width)
-    direction = np.where(yy < center_y, 1.0, -1.0).astype(np.float32)
+    src_points = np.asarray(
+        [
+            [0, 0],
+            [w - 1, 0],
+            [0, h - 1],
+            [w - 1, h - 1],
+            [w * 0.16, cy],
+            [w * 0.84, cy],
+            [cx, h * 0.40],
+            [cx, h * 0.64],
+            [w * 0.30, h * 0.45],
+            [w * 0.70, h * 0.45],
+            [w * 0.30, h * 0.60],
+            [w * 0.70, h * 0.60],
+            [cx, cy],
+        ],
+        dtype=np.float32,
+    )
+    dst_points = src_points.copy()
+    dst_points[4, 0] -= side_delta + wide_out - round_in
+    dst_points[5, 0] += side_delta + wide_out - round_in
+    dst_points[6, 1] -= open_delta * 0.75
+    dst_points[7, 1] += open_delta
+    dst_points[8, 1] -= open_delta * 0.42
+    dst_points[9, 1] -= open_delta * 0.42
+    dst_points[10, 1] += open_delta * 0.58
+    dst_points[11, 1] += open_delta * 0.58
+    dst_points[:, 0] = np.clip(dst_points[:, 0], 0, w - 1)
+    dst_points[:, 1] = np.clip(dst_points[:, 1], 0, h - 1)
 
-    map_x = xx - (xx - center_x) * horizontal_gain * ellipse
-    map_y = yy + direction * vertical_delta * ellipse
-    map_x = np.clip(map_x, 0, w - 1).astype(np.float32)
-    map_y = np.clip(map_y, 0, h - 1).astype(np.float32)
-    return cv2.remap(roi_image, map_x, map_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101)
+    triangles = [
+        (0, 4, 6),
+        (0, 6, 1),
+        (1, 6, 5),
+        (4, 8, 6),
+        (6, 9, 5),
+        (8, 12, 9),
+        (8, 10, 12),
+        (9, 12, 11),
+        (10, 7, 12),
+        (12, 7, 11),
+        (4, 2, 10),
+        (4, 10, 8),
+        (5, 9, 11),
+        (5, 11, 3),
+        (2, 7, 10),
+        (7, 3, 11),
+        (2, 3, 7),
+        (0, 2, 4),
+        (1, 5, 3),
+    ]
+    warped = roi_image.copy()
+    for tri in triangles:
+        idx = np.asarray(tri, dtype=np.int32)
+        _affine_triangle(roi_image, warped, src_points[idx], dst_points[idx])
+    return warped.astype(np.uint8)
 
 
 def _blend_roi(frame: np.ndarray, warped_roi: np.ndarray, bounds: tuple[int, int, int, int], alpha_scale: float) -> None:
@@ -211,12 +288,37 @@ def _draw_cheek_pulse(frame: np.ndarray, roi: MouthRoi, mouth_open: float) -> No
     _draw_transparent_ellipse(frame, (cx + dx, cy), axes, (154, 142, 230), alpha)
 
 
+def _blink_amount(frame_index: int, interval: int, duration: int) -> float:
+    if interval <= 0 or duration <= 0:
+        return 0.0
+    phase = frame_index % interval
+    if phase >= duration:
+        return 0.0
+    center = (duration - 1) / 2.0
+    return float(np.clip(1.0 - abs(phase - center) / max(center + 0.5, 1.0), 0.0, 1.0))
+
+
+def _draw_blink(frame: np.ndarray, amount: float) -> None:
+    if amount <= 0.0:
+        return
+    h, w = frame.shape[:2]
+    eye_y = int(h * 0.405)
+    eye_dx = int(w * 0.105)
+    axes = (int(w * 0.045), max(2, int(h * 0.010 + h * 0.020 * amount)))
+    skin_color = (172, 204, 234)
+    line_color = (60, 50, 45)
+    for cx in (w // 2 - eye_dx, w // 2 + eye_dx):
+        _draw_transparent_ellipse(frame, (cx, eye_y), axes, skin_color, min(0.95, 0.35 + 0.55 * amount))
+        cv2.ellipse(frame, (cx, eye_y), (axes[0], max(2, axes[1] // 3)), 0, 0, 180, line_color, 2, cv2.LINE_AA)
+
+
 def render_static_avatar_frame(
     base_image: np.ndarray,
     mouth_open: float,
     mouth_width: float = 0.55,
     lip_round: float = 0.25,
     config: ExpressiveAvatarConfig | None = None,
+    frame_index: int = 0,
 ) -> np.ndarray:
     """Render one frame by locally warping the static avatar mouth region."""
     if config is None:
@@ -230,11 +332,12 @@ def render_static_avatar_frame(
     bounds = _roi_bounds(frame.shape, config.mouth_roi)
     x0, y0, x1, y1 = bounds
     roi_image = frame[y0:y1, x0:x1].copy()
-    warped_roi = _warp_mouth_roi(roi_image, mouth_open, mouth_width, lip_round)
+    warped_roi = _warp_mouth_roi_mesh(roi_image, mouth_open, mouth_width, lip_round)
     _blend_roi(frame, warped_roi, bounds, alpha_scale=0.25 + 0.72 * mouth_open)
     _draw_open_mouth_details(frame, config.mouth_roi, mouth_open, mouth_width, lip_round)
     if config.cheek_pulse:
         _draw_cheek_pulse(frame, config.mouth_roi, mouth_open)
+    _draw_blink(frame, _blink_amount(frame_index, config.blink_interval_frames, config.blink_duration_frames))
     if config.show_roi_debug:
         cv2.rectangle(frame, (x0, y0), (x1, y1), (60, 220, 60), 2)
     return frame
@@ -257,10 +360,18 @@ def params_to_static_avatar_video(
     if not writer.isOpened():
         raise RuntimeError(f"Failed to open video writer: {output_path}")
     try:
-        for row in params:
+        for frame_index, row in enumerate(params):
             mouth_open = float(row[0])
             mouth_width = float(row[1]) if row.shape[0] > 1 else 0.55
             lip_round = float(row[2]) if row.shape[0] > 2 else 0.25
-            writer.write(render_static_avatar_frame(base_image, mouth_open, mouth_width, lip_round, config))
+            frame = render_static_avatar_frame(
+                base_image,
+                mouth_open,
+                mouth_width,
+                lip_round,
+                config,
+                frame_index=frame_index,
+            )
+            writer.write(frame)
     finally:
         writer.release()

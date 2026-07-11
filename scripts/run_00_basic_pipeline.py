@@ -73,6 +73,7 @@ def main() -> None:
         [python, "scripts/04_infer_pytorch.py", "--config", "configs/infer_pytorch.yaml"],
         [python, "scripts/05_export_onnx.py", "--config", "configs/export_onnx.yaml"],
         [python, "scripts/06_infer_onnx.py", "--config", "configs/infer_onnx.yaml"],
+        [python, "scripts/17_compare_inference_backends.py", "--config", "configs/consistency_compare.yaml"],
         [python, "scripts/07_realtime_rule_demo.py", "--config", "configs/realtime_rule.yaml"],
         [python, "scripts/08_benchmark.py", "--config", "configs/benchmark.yaml"],
     ]

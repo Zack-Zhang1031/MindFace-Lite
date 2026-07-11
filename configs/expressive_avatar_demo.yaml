@@ -22,6 +22,19 @@ mouth_roi:
 expressive:
   head_bob_px: 4.0
   cheek_pulse: true
+  blink_interval_frames: 75
+  blink_duration_frames: 5
+
+viseme:
+  enabled: true
+  events:
+    - {start: 0.20, end: 0.32, shape: closed}
+    - {start: 0.70, end: 1.05, shape: a}
+    - {start: 1.20, end: 1.55, shape: i}
+    - {start: 1.80, end: 2.35, shape: o}
+    - {start: 2.55, end: 2.95, shape: u}
+    - {start: 3.20, end: 3.34, shape: closed}
+    - {start: 3.34, end: 3.80, shape: a}
 
 video:
   output_path: outputs/videos/expressive_avatar_demo.mp4

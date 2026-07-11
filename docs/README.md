@@ -16,12 +16,16 @@
 - `09_grid_preprocessing.md`：GRID 原始音频/对齐/视频扫描与 manifest 生成。
 - `10_quantization_pruning.md`：ONNX INT8 动态量化、剪枝、fine-tune、benchmark。
 - `11_landmark_tts_mic_rknn.md`：GRID 视频 landmark、真实 TTS、麦克风、RKNN、Device Tree/U-Boot 入口。
+- `grid-landmark-training-report.md`：真实 GRID landmark 训练报告模板。
 - `features/environment-matrix.md`：Windows/WSL/硬件环境职责矩阵。
+- `features/unified-cli.md`：统一 CLI 入口。
+- `features/backend-consistency.md`：PyTorch、ONNXRuntime、RKNN 后端一致性对比。
 - `features/better-visual-renderer.md`：Stage 1.5 更精致的 OpenCV 口型渲染器。
 - `features/expressive-static-avatar.md`：Stage 1.6 静态人脸图 + OpenCV 嘴部 ROI 形变。
 - `features/health-check.md`：一键健康检查设计。
 - `features/experiment-tracking.md`：训练实验追踪设计。
 - `features/grid-landmark-quality.md`：GRID landmark 标签质量报告设计。
 - `features/rknn-deployment-report.md`：RKNN 部署报告设计。
+- `media/README.md`：文档演示图片索引。
 - `file-disposition-review.md`：旧文件归档与清理记录。
 - `progress.md`：当前项目进度。

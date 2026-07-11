@@ -18,6 +18,7 @@ REQUIRED = [
     "outputs/videos/pytorch_mlp_demo.mp4",
     "outputs/models/mlp_mouth.onnx",
     "outputs/videos/onnx_mlp_demo.mp4",
+    "outputs/reports/backend_consistency_report.json",
     "outputs/reports/benchmark_report.json",
 ]
 

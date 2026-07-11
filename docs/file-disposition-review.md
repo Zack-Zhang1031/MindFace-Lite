@@ -7,13 +7,16 @@ Status after cleanup:
 - Kept: `data/raw/grid`, `cpp`, and `tools`.
 - Archived: legacy package/configs/scripts/docs into `archive/legacy-2026-07-06/`.
 - Cleaned: `build`, `__pycache__`, old synthetic NPZ files, old 4-digit synthetic WAV files, and duplicate old root-level outputs.
+- Archived root-level ONNX debug files into `archive/root-onnx-debug-2026-07-10/`.
 
 ## Can The Current Training Code Train `data/raw/grid` Directly?
 
-No. The current training code trains preprocessed data under:
+Not directly. The current training code trains any manifest-formatted dataset, including synthetic data, GRID RMS pseudo labels, and GRID video-landmark labels. Raw GRID still needs preprocessing first.
 
 ```text
 data/synthetic_mouth/manifest.csv
+data/processed/grid_mouth/manifest.csv
+data/processed/grid_landmark_mouth/manifest.csv
 ```
 
 Expected training format:
@@ -24,15 +27,26 @@ features_XXX.npy  -> [frames, 70] audio features
 targets_XXX.npy   -> [frames, 3] mouth parameters
 ```
 
-`data/raw/grid` is raw corpus data. It needs a preprocessing stage:
+`data/raw/grid` is raw corpus data. It needs one of these preprocessing stages:
 
 ```text
-raw GRID audio/video/alignment
-  -> pair utterances
-  -> extract audio features
-  -> extract mouth labels from video landmarks or blendshapes
-  -> write data/processed/grid_mouth/manifest.csv
-  -> train on processed GRID data
+raw GRID audio/alignment
+  -> scripts/09_prepare_grid_dataset.py
+  -> RMS pseudo mouth labels
+  -> data/processed/grid_mouth/manifest.csv
+
+raw GRID audio/video + extracted MediaPipe landmarks
+  -> scripts/14_extract_grid_video_landmarks.py
+  -> scripts/16_prepare_grid_landmark_dataset.py
+  -> video-landmark mouth labels
+  -> data/processed/grid_landmark_mouth/manifest.csv
+```
+
+Train with:
+
+```powershell
+python scripts/03_train_model.py --config configs/train_grid_mlp.yaml
+python scripts/03_train_model.py --config configs/train_grid_landmark_mlp.yaml
 ```
 
 ## Raw GRID Scan
@@ -132,6 +146,7 @@ Decision applied:
 
 - Deleted `build/` and `__pycache__/`.
 - Deleted duplicate old root-level outputs.
+- Moved root-level ONNX debug files `check0_base_optimize.onnx`, `check2_correct_ops.onnx`, and `check3_fuse_ops.onnx` to `archive/root-onnx-debug-2026-07-10/`.
 - Kept current demo outputs under `outputs/audio`, `outputs/videos`, `outputs/logs`, `outputs/models`, `outputs/checkpoints`, and `outputs/reports`.
 
 ## Recommended Cleanup Plan

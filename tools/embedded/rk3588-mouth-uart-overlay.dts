@@ -1,0 +1,23 @@
+/dts-v1/;
+/plugin/;
+
+/*
+ * Example RK3588 UART overlay for mouth actuator control.
+ *
+ * Do not flash this blindly. Confirm the actual board schematic, pinmux group,
+ * voltage level, and UART instance with the BSP or hardware engineer first.
+ */
+
+/ {
+    compatible = "rockchip,rk3588";
+
+    fragment@0 {
+        target = <&uart2>;
+
+        __overlay__ {
+            status = "okay";
+            pinctrl-names = "default";
+            pinctrl-0 = <&uart2m0_xfer>;
+        };
+    };
+};

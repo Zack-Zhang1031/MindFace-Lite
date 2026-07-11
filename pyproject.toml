@@ -4,8 +4,15 @@ version = "1.0.0"
 description = "MindFace-Lite: lightweight realtime speech-driven digital human mouth animation system"
 requires-python = ">=3.10"
 
+[project.scripts]
+mindface = "mindface.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
 
 [build-system]
 requires = ["setuptools>=61"]

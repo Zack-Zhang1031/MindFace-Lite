@@ -1,0 +1,6 @@
+/* Device Tree snippet example only. Do not paste blindly into a real board DTS. */
+&uart2 {
+    status = "okay";
+    pinctrl-names = "default";
+    pinctrl-0 = <&uart2m0_xfer>;
+};

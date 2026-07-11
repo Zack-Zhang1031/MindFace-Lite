@@ -1,0 +1,35 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.idea/
+.pytest_cache/
+build/
+
+# Local corpora, generated datasets, and debug archives.
+data/**
+!data/**/
+!data/**/.gitkeep
+archive/
+
+# Generated outputs can be reproduced from scripts.
+outputs/**
+!outputs/**/
+!outputs/**/.gitkeep
+
+# Model/tool binaries.
+*.pt
+*.onnx
+*.onnx.data
+*.rknn
+*.dtbo
+models/**/*.task
+
+# Runtime media/log artifacts.
+*.wav
+*.mp4
+*.avi
+outputs/videos/*.png
+outputs/logs/*.log
+outputs/logs/*.csv
+outputs/reports/*.json

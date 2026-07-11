@@ -96,7 +96,59 @@ True lip-sync training requires video label extraction:
 GRID video -> mouth landmarks / blendshape labels -> targets_*.npy
 ```
 
-That can be implemented later with MediaPipe, dlib, OpenCV landmark models, or a custom landmark pipeline.
+MindFace-Lite now provides the MediaPipe landmark extraction and audio/target alignment entry points.
+
+## Landmark Supervised Dataset
+
+After GRID video landmark extraction:
+
+```powershell
+python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml
+```
+
+Build a training manifest that uses landmark-derived targets instead of RMS pseudo labels:
+
+```powershell
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml
+```
+
+Debug subset:
+
+```powershell
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml --max-samples 8
+```
+
+Then train:
+
+```powershell
+python scripts/03_train_model.py --config configs/train_grid_landmark_mlp.yaml
+```
+
+This path expects:
+
+```text
+data/raw/grid/audio
+data/processed/grid_video_landmarks/manifest.csv
+data/processed/grid_video_landmarks/targets_*.npy
+```
+
+It writes:
+
+```text
+data/processed/grid_landmark_mouth/manifest.csv
+data/processed/grid_landmark_mouth/features_*.npy
+data/processed/grid_landmark_mouth/targets_*.npy
+```
+
+The training target columns are:
+
+```text
+mouth_open
+mouth_width
+mouth_round
+```
+
+If `data/raw/grid` is missing, this training path cannot run against real data yet.
 
 ## Manifest Columns
 

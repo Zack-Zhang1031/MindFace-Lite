@@ -45,6 +45,35 @@ Fix:
 python scripts/02_generate_synthetic_dataset.py --config configs/synthetic_dataset.yaml
 ```
 
+## Missing GRID Raw Data
+
+Symptom:
+
+```text
+GRID audio directory not found
+GRID video directory not found
+```
+
+Fix:
+
+Copy or restore the GRID corpus under:
+
+```text
+data/raw/grid/audio
+data/raw/grid/video
+data/raw/grid/alignments
+```
+
+Then rerun the intended preprocessing step:
+
+```powershell
+python scripts/09_prepare_grid_dataset.py --config configs/prepare_grid.yaml
+python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml
+```
+
+`09_prepare_grid_dataset.py` builds RMS pseudo labels from GRID audio. `16_prepare_grid_landmark_dataset.py` requires landmark outputs from `14_extract_grid_video_landmarks.py`.
+
 ## Missing Checkpoint
 
 Symptom:
@@ -156,6 +185,31 @@ runtime:
 ```
 
 Set it to `true` only when debugging RKNN conversion internals.
+
+## RKNN Unavailable in Backend Consistency Report
+
+Symptom in `outputs/reports/backend_consistency_report.json`:
+
+```json
+{
+  "rknn": {
+    "available": false
+  }
+}
+```
+
+Meaning:
+
+This is expected in the Windows training environment if `rknn-toolkit2` is not installed or `outputs/models/mlp_mouth.rk3588.rknn` has not been generated.
+
+Fix for real RKNN comparison:
+
+```bash
+cd /mnt/c/Users/Administrator/Desktop/MindFace-Lite
+source ~/.venvs/mindface-rknn/bin/activate
+python scripts/24_rknn_convert_and_infer.py --config configs/rknn_deploy.yaml
+python scripts/17_compare_inference_backends.py --config configs/consistency_compare.yaml
+```
 
 ## MediaPipe Missing Linux GL Libraries
 
