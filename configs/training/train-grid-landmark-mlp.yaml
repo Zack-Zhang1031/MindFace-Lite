@@ -1,0 +1,25 @@
+dataset:
+  dir: data/processed/grid_landmark_mouth
+features:
+  fps: 25
+  frame_ms: 40
+model:
+  type: mlp
+  params:
+    input_dim: 70
+    hidden_dim: 128
+    output_dim: 3
+    dropout: 0.05
+train:
+  resume_from: null
+  seed: 42
+  device: cuda
+  epochs: 10
+  batch_size: 64
+  lr: 0.001
+  num_workers: 0
+output:
+  checkpoint_path: outputs/checkpoints/grid_landmark_mlp_mouth.pt
+  last_checkpoint_path: outputs/checkpoints/grid_landmark_mlp_mouth.last.pt
+  log_path: outputs/logs/train_grid_landmark_mlp.log
+  experiment_root: outputs/experiments

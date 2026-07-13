@@ -33,7 +33,7 @@ It is not machine learning yet, but it builds the debugging foundation for later
 ## Folder Structure
 
 ```text
-configs/rule_demo.yaml
+configs/demos/rule-demo.yaml
 scripts/00_generate_test_audio.py
 scripts/01_rule_mouth_demo.py
 scripts/01_5_better_visual_demo.py
@@ -53,9 +53,9 @@ outputs/logs/
 
 ```powershell
 python scripts/00_generate_test_audio.py
-python scripts/01_rule_mouth_demo.py --config configs/rule_demo.yaml
-python scripts/01_5_better_visual_demo.py --config configs/better_visual_demo.yaml
-python scripts/01_6_expressive_avatar_demo.py --config configs/expressive_avatar_demo.yaml
+python scripts/01_rule_mouth_demo.py --config configs/demos/rule-demo.yaml
+python scripts/01_5_better_visual_demo.py --config configs/demos/better-visual-demo.yaml
+python scripts/01_6_expressive_avatar_demo.py --config configs/demos/expressive-avatar-demo.yaml
 ```
 
 ## Expected Output
@@ -134,7 +134,7 @@ Then it applies local mouth ROI deformation:
 same WAV -> same RMS -> same mouth_open -> OpenCV remap on mouth region
 ```
 
-The mouth region is configured in `configs/expressive_avatar_demo.yaml` with normalized coordinates. The renderer moves upper and lower lip pixels apart as `mouth_open` increases, then overlays the dark mouth cavity, teeth and tongue. This is closer to a real digital-human rendering pipeline than the fully drawn Stage 1.5 face, but it is still lightweight and educational.
+The mouth region is configured in `configs/demos/expressive-avatar-demo.yaml` with normalized coordinates. The renderer moves upper and lower lip pixels apart as `mouth_open` increases, then overlays the dark mouth cavity, teeth and tongue. This is closer to a real digital-human rendering pipeline than the fully drawn Stage 1.5 face, but it is still lightweight and educational.
 
 ## Interview Explanation
 

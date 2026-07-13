@@ -18,7 +18,7 @@ Run:
 
 ```powershell
 python scripts/00_generate_test_audio.py
-python scripts/01_5_better_visual_demo.py --config configs/better_visual_demo.yaml
+python scripts/01_5_better_visual_demo.py --config configs/demos/better-visual-demo.yaml
 ```
 
 Outputs:

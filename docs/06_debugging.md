@@ -42,7 +42,7 @@ Dataset manifest not found
 Fix:
 
 ```powershell
-python scripts/02_generate_synthetic_dataset.py --config configs/synthetic_dataset.yaml
+python scripts/02_generate_synthetic_dataset.py --config configs/datasets/synthetic-dataset.yaml
 ```
 
 ## Missing GRID Raw Data
@@ -67,9 +67,9 @@ data/raw/grid/alignments
 Then rerun the intended preprocessing step:
 
 ```powershell
-python scripts/09_prepare_grid_dataset.py --config configs/prepare_grid.yaml
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml
-python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml
+python scripts/09_prepare_grid_dataset.py --config configs/datasets/prepare-grid.yaml
+python scripts/14_extract_grid_video_landmarks.py --config configs/datasets/grid-video-landmarks.yaml
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/datasets/prepare-grid-landmark.yaml
 ```
 
 `09_prepare_grid_dataset.py` builds RMS pseudo labels from GRID audio. `16_prepare_grid_landmark_dataset.py` requires landmark outputs from `14_extract_grid_video_landmarks.py`.
@@ -85,7 +85,7 @@ Checkpoint not found
 Fix:
 
 ```powershell
-python scripts/03_train_model.py --config configs/train_mlp.yaml
+python scripts/03_train_model.py --config configs/training/train-mlp.yaml
 ```
 
 ## ONNXRuntime Not Installed
@@ -207,8 +207,8 @@ Fix for real RKNN comparison:
 ```bash
 cd /mnt/c/Users/Administrator/Desktop/MindFace-Lite
 source ~/.venvs/mindface-rknn/bin/activate
-python scripts/24_rknn_convert_and_infer.py --config configs/rknn_deploy.yaml
-python scripts/17_compare_inference_backends.py --config configs/consistency_compare.yaml
+python scripts/24_rknn_convert_and_infer.py --config configs/deployment/rknn-deploy.yaml
+python scripts/17_compare_inference_backends.py --config configs/benchmarks/backend-consistency.yaml
 ```
 
 ## MediaPipe Missing Linux GL Libraries
@@ -247,7 +247,7 @@ cd C:\Users\Administrator\Desktop\MindFace-Lite
 conda activate mindface-lite
 python -m pip install -r requirements-optional.txt
 python scripts/14_extract_grid_video_landmarks.py --check-deps
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml --max-videos 8 --output-dir data/processed/grid_video_landmarks_debug
+python scripts/14_extract_grid_video_landmarks.py --config configs/datasets/grid-video-landmarks.yaml --max-videos 8 --output-dir data/processed/grid_video_landmarks_debug
 ```
 
 Alternative fix in a separate WSL environment:
@@ -278,7 +278,7 @@ landmarks:
 or:
 
 ```powershell
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml --max-videos 8 --output-dir data/processed/grid_video_landmarks_gpu_debug --delegate gpu
+python scripts/14_extract_grid_video_landmarks.py --config configs/datasets/grid-video-landmarks.yaml --max-videos 8 --output-dir data/processed/grid_video_landmarks_gpu_debug --delegate gpu
 ```
 
 However, GPU delegate support is platform-dependent. If GPU delegate fails on Windows, use:
@@ -360,7 +360,7 @@ python -m pip install -r requirements-optional.txt
 python scripts/23_mic_stream_rule_demo.py --list-devices
 ```
 
-Then set `configs/mic_stream.yaml`:
+Then set `configs/realtime/mic-stream.yaml`:
 
 ```yaml
 audio:
@@ -401,7 +401,7 @@ On Linux/WSL, `pyttsx3` uses the espeak driver. Some versions leave callback thr
 
 Fix:
 
-`configs/real_tts.yaml` uses:
+`configs/realtime/real-tts.yaml` uses:
 
 ```yaml
 pyttsx3:
@@ -414,7 +414,7 @@ Recommended production path:
 
 ```powershell
 conda activate mindface-lite
-python scripts/21_real_tts_generate_wav.py --config configs/real_tts.yaml
+python scripts/21_real_tts_generate_wav.py --config configs/realtime/real-tts.yaml
 ```
 
 Use `mindface-rknn` only for RKNN conversion, Device Tree, and cross-compilation work.

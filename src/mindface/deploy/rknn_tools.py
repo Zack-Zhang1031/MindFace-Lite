@@ -179,7 +179,7 @@ def convert_onnx_to_rknn(
         from rknn.api import RKNN
     except ImportError as exc:
         raise RuntimeError(
-            "rknn-toolkit2 is not installed. Install it in the RKNN development environment, then rerun this script."
+            "rknn-toolkit2 is not installed. Install it in the RKNN development environment, then rerun the command."
         ) from exc
 
     onnx_path = resolve_path(onnx_path)

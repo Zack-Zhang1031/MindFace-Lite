@@ -15,8 +15,8 @@ RKNN 转换脚本会保存部署报告，记录转换环境、ONNX 输入、RKNN
 WSL 环境中运行：
 
 ```bash
-python scripts/24_rknn_convert_and_infer.py --config configs/rknn_deploy.yaml --dry-run
-python scripts/24_rknn_convert_and_infer.py --config configs/rknn_deploy.yaml
+python scripts/24_rknn_convert_and_infer.py --config configs/deployment/rknn-deploy.yaml --dry-run
+python scripts/24_rknn_convert_and_infer.py --config configs/deployment/rknn-deploy.yaml
 ```
 
 报告包含 Python、NumPy、ONNX、ONNXRuntime、RKNN-Toolkit2 版本，ONNX/RKNN 文件大小，输入 shape，量化数据集条目数，以及板端验证建议。

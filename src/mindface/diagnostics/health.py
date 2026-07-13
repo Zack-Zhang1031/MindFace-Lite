@@ -5,9 +5,14 @@ import importlib.util
 import platform
 import shutil
 import sys
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
+
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
+from packaging.version import InvalidVersion, Version
 
 from mindface.utils.config import project_root, resolve_path
 
@@ -161,6 +166,84 @@ def check_dependency_policy() -> list[CheckResult]:
     return results
 
 
+def check_requirement_versions(
+    requirements_path: str | Path,
+    version_lookup: Callable[[str], str | None] = _package_version,
+) -> list[CheckResult]:
+    path = resolve_path(requirements_path)
+    if not path.exists():
+        return [
+            CheckResult(
+                "requirement:file",
+                "fail",
+                f"Requirements file not found: {path}",
+                {"path": str(path)},
+            )
+        ]
+
+    results: list[CheckResult] = []
+    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        line = raw_line.strip()
+        if not line or line.startswith("#") or line.startswith("-"):
+            continue
+        try:
+            requirement = Requirement(line)
+        except InvalidRequirement:
+            results.append(
+                CheckResult(
+                    f"requirement:line-{line_number}",
+                    "warn",
+                    f"Could not parse requirement line {line_number}: {line}",
+                    {"path": str(path), "line": line},
+                )
+            )
+            continue
+        if requirement.marker is not None and not requirement.marker.evaluate():
+            continue
+
+        package_name = canonicalize_name(requirement.name)
+        installed = version_lookup(requirement.name)
+        details = {
+            "package": requirement.name,
+            "installed": installed,
+            "required": str(requirement.specifier),
+            "source": str(path),
+        }
+        if installed is None:
+            results.append(
+                CheckResult(
+                    f"requirement:{package_name}",
+                    "fail",
+                    f"{requirement.name} is required but not installed.",
+                    details,
+                )
+            )
+            continue
+        try:
+            compatible = Version(installed) in requirement.specifier
+        except InvalidVersion:
+            compatible = False
+        if compatible:
+            results.append(
+                CheckResult(
+                    f"requirement:{package_name}",
+                    "pass",
+                    f"{requirement.name} {installed} satisfies {requirement.specifier}.",
+                    details,
+                )
+            )
+        else:
+            results.append(
+                CheckResult(
+                    f"requirement:{package_name}",
+                    "fail",
+                    f"{requirement.name} {installed} does not satisfy {requirement.specifier}.",
+                    details,
+                )
+            )
+    return results
+
+
 def check_torch_cuda() -> CheckResult:
     if not _module_available("torch"):
         return CheckResult("torch_cuda", "fail", "torch is not installed.")
@@ -191,15 +274,15 @@ def check_project_paths() -> list[CheckResult]:
         ("requirements_optional", "requirements-optional.txt", False),
         ("requirements_rknn", "requirements-rknn.txt", False),
         ("pyproject", "pyproject.toml", True),
-        ("rule_config", "configs/rule_demo.yaml", True),
-        ("expressive_avatar_config", "configs/expressive_avatar_demo.yaml", True),
+        ("rule_config", "configs/demos/rule-demo.yaml", True),
+        ("expressive_avatar_config", "configs/demos/expressive-avatar-demo.yaml", True),
         ("expressive_avatar_asset", "assets/avatar/stage1_6_static_face.png", True),
-        ("train_config", "configs/train_mlp.yaml", True),
-        ("grid_train_config", "configs/train_grid_mlp.yaml", False),
-        ("grid_landmark_prepare_config", "configs/prepare_grid_landmark.yaml", False),
-        ("grid_landmark_train_config", "configs/train_grid_landmark_mlp.yaml", False),
-        ("consistency_config", "configs/consistency_compare.yaml", False),
-        ("rknn_config", "configs/rknn_deploy.yaml", False),
+        ("train_config", "configs/training/train-mlp.yaml", True),
+        ("grid_train_config", "configs/training/train-grid-mlp.yaml", False),
+        ("grid_landmark_prepare_config", "configs/datasets/prepare-grid-landmark.yaml", False),
+        ("grid_landmark_train_config", "configs/training/train-grid-landmark-mlp.yaml", False),
+        ("consistency_config", "configs/benchmarks/backend-consistency.yaml", False),
+        ("rknn_config", "configs/deployment/rknn-deploy.yaml", False),
         ("project_demo", "PROJECT_DEMO.md", False),
         ("test_audio", "outputs/audio/test_voice.wav", False),
         ("rule_video", "outputs/videos/rule_mouth_demo.mp4", False),
@@ -282,6 +365,7 @@ def run_health_checks() -> dict[str, Any]:
     checks: list[CheckResult] = [check_python(), check_git_workspace()]
     checks.extend(check_imports())
     checks.extend(check_dependency_policy())
+    checks.extend(check_requirement_versions("requirements.txt"))
     checks.append(check_torch_cuda())
     checks.extend(check_project_paths())
     checks.extend(check_grid_data())

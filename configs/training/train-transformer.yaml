@@ -1,0 +1,27 @@
+dataset:
+  dir: data/synthetic_mouth
+features:
+  fps: 25
+  frame_ms: 40
+model:
+  type: transformer
+  params:
+    input_dim: 70
+    model_dim: 96
+    num_heads: 4
+    num_layers: 2
+    output_dim: 3
+    dropout: 0.1
+train:
+  resume_from: null
+  seed: 42
+  device: auto
+  epochs: 2
+  batch_size: 8
+  lr: 0.001
+  num_workers: 0
+output:
+  checkpoint_path: outputs/checkpoints/transformer_mouth.pt
+  last_checkpoint_path: outputs/checkpoints/transformer_mouth.last.pt
+  log_path: outputs/logs/train_transformer.log
+  experiment_root: outputs/experiments

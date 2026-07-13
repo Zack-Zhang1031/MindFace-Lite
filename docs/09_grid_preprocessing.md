@@ -26,7 +26,7 @@ So a preprocessing step is required before training.
 Use:
 
 ```powershell
-python scripts/09_prepare_grid_dataset.py --config configs/prepare_grid.yaml
+python scripts/09_prepare_grid_dataset.py --config configs/datasets/prepare-grid.yaml
 ```
 
 This scans:
@@ -51,7 +51,7 @@ data/processed/grid_mouth/targets_000000.npy
 For a small test:
 
 ```powershell
-python scripts/09_prepare_grid_dataset.py --config configs/prepare_grid.yaml --max-samples 8 --output-dir data/processed/grid_mouth_debug
+python scripts/09_prepare_grid_dataset.py --config configs/datasets/prepare-grid.yaml --max-samples 8 --output-dir data/processed/grid_mouth_debug
 ```
 
 ## Full GRID Audio Run
@@ -59,7 +59,7 @@ python scripts/09_prepare_grid_dataset.py --config configs/prepare_grid.yaml --m
 For all available GRID audio samples:
 
 ```powershell
-python scripts/09_prepare_grid_dataset.py --config configs/prepare_grid.yaml
+python scripts/09_prepare_grid_dataset.py --config configs/datasets/prepare-grid.yaml
 ```
 
 The current config has:
@@ -77,7 +77,7 @@ That means it can process the full audio/alignment set even though only part of 
 After full preprocessing:
 
 ```powershell
-python scripts/03_train_model.py --config configs/train_grid_mlp.yaml
+python scripts/03_train_model.py --config configs/training/train-grid-mlp.yaml
 ```
 
 ## Important Label Boundary
@@ -103,25 +103,25 @@ MindFace-Lite now provides the MediaPipe landmark extraction and audio/target al
 After GRID video landmark extraction:
 
 ```powershell
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml
+python scripts/14_extract_grid_video_landmarks.py --config configs/datasets/grid-video-landmarks.yaml
 ```
 
 Build a training manifest that uses landmark-derived targets instead of RMS pseudo labels:
 
 ```powershell
-python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/datasets/prepare-grid-landmark.yaml
 ```
 
 Debug subset:
 
 ```powershell
-python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml --max-samples 8
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/datasets/prepare-grid-landmark.yaml --max-samples 8
 ```
 
 Then train:
 
 ```powershell
-python scripts/03_train_model.py --config configs/train_grid_landmark_mlp.yaml
+python scripts/03_train_model.py --config configs/training/train-grid-landmark-mlp.yaml
 ```
 
 This path expects:
@@ -153,7 +153,9 @@ If `data/raw/grid` is missing, this training path cannot run against real data y
 ## Manifest Columns
 
 ```text
+schema_version
 split
+split_strategy
 features
 targets
 speaker
@@ -167,3 +169,5 @@ source_video
 ```
 
 The trainer only needs `split`, `features`, and `targets`. The other columns are for traceability and debugging.
+
+GRID audio defaults to `speaker_disjoint`, so every speaker belongs to exactly one split. Video landmark extraction uses the same strategy when videos are grouped under speaker directories; for flat video directories it records `sample_fallback` because speaker identity cannot be recovered safely from an utterance name alone.

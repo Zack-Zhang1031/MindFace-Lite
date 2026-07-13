@@ -6,11 +6,13 @@ from dataclasses import dataclass
 from pathlib import Path
 import platform
 import urllib.request
+from typing import Any
 
 import cv2
 import numpy as np
 
 from mindface.data.grid_quality import build_grid_landmark_quality_report
+from mindface.data.splitting import speaker_disjoint_split
 from mindface.utils.config import resolve_path
 
 
@@ -35,8 +37,43 @@ class LandmarkConfig:
     model_url: str
     auto_download_model: bool
     delegate: str
+    split_strategy: str = "auto"
     quality_report_path: Path | None = None
     quality_min_detection_rate: float = 0.95
+
+
+def landmark_config_from_mapping(
+    cfg: dict[str, Any],
+    max_videos: int | None,
+    output_dir: str | None,
+    delegate: str | None,
+) -> LandmarkConfig:
+    grid_cfg = cfg["grid"]
+    landmark_cfg = cfg["landmarks"]
+    resolved_output_dir = resolve_path(output_dir if output_dir is not None else grid_cfg["output_dir"])
+    configured_quality_path = cfg.get("quality", {}).get("report_path")
+    quality_report_path = (
+        resolved_output_dir / "quality_report.json"
+        if output_dir is not None
+        else (resolve_path(configured_quality_path) if configured_quality_path else None)
+    )
+    return LandmarkConfig(
+        video_dir=resolve_path(grid_cfg["video_dir"]),
+        output_dir=resolved_output_dir,
+        max_videos=max_videos if max_videos is not None else grid_cfg.get("max_videos"),
+        split_ratios=tuple(float(value) for value in grid_cfg["split_ratios"]),
+        split_strategy=str(grid_cfg.get("split_strategy", "auto")),
+        seed=int(grid_cfg.get("seed", 42)),
+        refine_landmarks=bool(landmark_cfg.get("refine_landmarks", True)),
+        min_detection_confidence=float(landmark_cfg.get("min_detection_confidence", 0.5)),
+        min_tracking_confidence=float(landmark_cfg.get("min_tracking_confidence", 0.5)),
+        model_path=resolve_path(landmark_cfg.get("model_path", "models/external/mediapipe/face_landmarker.task")),
+        model_url=str(landmark_cfg.get("model_url", DEFAULT_FACE_LANDMARKER_URL)),
+        auto_download_model=bool(landmark_cfg.get("auto_download_model", True)),
+        delegate=str(delegate if delegate is not None else landmark_cfg.get("delegate", "cpu")),
+        quality_report_path=quality_report_path,
+        quality_min_detection_rate=float(cfg.get("quality", {}).get("min_detection_rate", 0.95)),
+    )
 
 
 def check_mediapipe_available() -> tuple[bool, str]:
@@ -276,6 +313,19 @@ def prepare_grid_video_landmarks(cfg: LandmarkConfig, logger) -> Path:
     rng.shuffle(order)
     shuffled_videos = [videos[int(i)] for i in order]
 
+    speakers: dict[Path, str] = {}
+    for video_path in shuffled_videos:
+        relative = video_path.relative_to(cfg.video_dir)
+        speakers[video_path] = relative.parts[0] if len(relative.parts) > 1 else ""
+    can_split_speakers = len({speaker for speaker in speakers.values() if speaker}) >= 2 and all(speakers.values())
+    if cfg.split_strategy == "speaker_disjoint" and not can_split_speakers:
+        raise ValueError("speaker_disjoint video split requires videos grouped in at least two speaker subdirectories")
+    use_speaker_split = cfg.split_strategy == "speaker_disjoint" or (cfg.split_strategy == "auto" and can_split_speakers)
+    speaker_splits = (
+        speaker_disjoint_split(speakers.values(), cfg.split_ratios, cfg.seed) if use_speaker_split else {}
+    )
+    manifest_split_strategy = "speaker_disjoint" if use_speaker_split else "sample_fallback"
+
     cfg.output_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     total = len(shuffled_videos)
@@ -292,15 +342,19 @@ def prepare_grid_video_landmarks(cfg: LandmarkConfig, logger) -> Path:
                 raise RuntimeError(
                     "MediaPipe GPU delegate failed during GRID landmark extraction. "
                     "Python GPU delegate support is platform-dependent; on Windows it may be unavailable. "
-                    "Set landmarks.delegate=cpu in configs/grid_video_landmarks.yaml and rerun."
+                    "Set landmarks.delegate=cpu in configs/datasets/grid-video-landmarks.yaml and rerun."
                 ) from exc
             raise
         np.save(targets_path, targets)
-        split = split_for_index(index, total, cfg.split_ratios)
+        speaker = speakers[video_path]
+        split = speaker_splits[speaker] if use_speaker_split else split_for_index(index, total, cfg.split_ratios)
         rows.append(
             {
+                "schema_version": 1,
                 "sample_id": sample_id,
                 "split": split,
+                "split_strategy": manifest_split_strategy,
+                "speaker": speaker,
                 "video": str(video_path),
                 "landmarks_csv": str(landmarks_rel).replace("\\", "/"),
                 "targets": str(targets_rel).replace("\\", "/"),
@@ -312,7 +366,18 @@ def prepare_grid_video_landmarks(cfg: LandmarkConfig, logger) -> Path:
 
     manifest_path = cfg.output_dir / "manifest.csv"
     with manifest_path.open("w", encoding="utf-8", newline="") as f:
-        fieldnames = ["sample_id", "split", "video", "landmarks_csv", "targets", "num_frames", "mouth_dim"]
+        fieldnames = [
+            "schema_version",
+            "sample_id",
+            "split",
+            "split_strategy",
+            "speaker",
+            "video",
+            "landmarks_csv",
+            "targets",
+            "num_frames",
+            "mouth_dim",
+        ]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)

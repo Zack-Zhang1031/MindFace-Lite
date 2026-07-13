@@ -24,7 +24,7 @@ class MouthParameterDataset(Dataset):
         if not self.manifest_path.exists():
             raise FileNotFoundError(
                 f"Dataset manifest not found: {self.manifest_path}. "
-                "Run scripts/02_generate_synthetic_dataset.py first."
+                "Run 'mindface data synthetic' first."
             )
 
         self.samples: list[tuple[Path, Path]] = []

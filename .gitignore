@@ -1,5 +1,6 @@
 __pycache__/
 *.pyc
+*.egg-info/
 .venv/
 .env
 .idea/
@@ -23,7 +24,7 @@ outputs/**
 *.onnx.data
 *.rknn
 *.dtbo
-models/**/*.task
+models/external/**/*.task
 
 # Runtime media/log artifacts.
 *.wav

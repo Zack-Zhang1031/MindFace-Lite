@@ -69,7 +69,7 @@ def find_grid_landmark_samples(
     if not manifest_path.exists():
         raise FileNotFoundError(
             f"GRID landmark manifest not found: {manifest_path}. "
-            "Run scripts/14_extract_grid_video_landmarks.py first."
+            "Run 'mindface data extract-landmarks' first."
         )
 
     audio_by_utterance = _build_audio_index(raw_grid_dir)
@@ -111,7 +111,7 @@ def prepare_grid_landmark_dataset(cfg: dict[str, Any], max_samples_override: int
         raise FileNotFoundError(
             "Cannot prepare GRID landmark supervised dataset. Missing required inputs:\n- "
             + "\n- ".join(missing_inputs)
-            + "\nRun scripts/14_extract_grid_video_landmarks.py after restoring data/raw/grid, then rerun this script."
+            + "\nRestore data/raw/grid, run 'mindface data extract-landmarks', then rerun this command."
         )
 
     overwrite = bool(cfg.get("output", {}).get("overwrite", True))

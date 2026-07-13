@@ -4,6 +4,7 @@
 
 - `requirements/README.md`：需求文档索引。
 - `features/README.md`：功能文档索引。
+- `superpowers/README.md`：工程实施计划索引。
 - `00_rule_demo.md`：RMS 规则嘴巴动画。
 - `01_training.md`：合成数据集与 PyTorch 训练闭环。
 - `02_deployment.md`：PyTorch 推理、ONNX、ONNXRuntime、benchmark。

@@ -13,11 +13,11 @@ Deployment converts a trained PyTorch model into forms that can run outside the 
 ## Commands
 
 ```powershell
-python scripts/04_infer_pytorch.py --config configs/infer_pytorch.yaml
-python scripts/05_export_onnx.py --config configs/export_onnx.yaml
-python scripts/06_infer_onnx.py --config configs/infer_onnx.yaml
-python scripts/17_compare_inference_backends.py --config configs/consistency_compare.yaml
-python scripts/08_benchmark.py --config configs/benchmark.yaml
+python scripts/04_infer_pytorch.py --config configs/inference/infer-pytorch.yaml
+python scripts/05_export_onnx.py --config configs/deployment/export-onnx.yaml
+python scripts/06_infer_onnx.py --config configs/inference/infer-onnx.yaml
+python scripts/17_compare_inference_backends.py --config configs/benchmarks/backend-consistency.yaml
+python scripts/08_benchmark.py --config configs/benchmarks/benchmark.yaml
 ```
 
 ## Expected Outputs
@@ -43,12 +43,14 @@ If export creates `mlp_mouth.onnx.data`, keep it next to the `.onnx` file when c
 - Benchmarking reports latency and approximate FPS.
 - Backend consistency checks whether PyTorch, ONNXRuntime, and optional RKNN produce comparable outputs from the same audio features.
 
+All three inference implementations expose the same `MouthPredictor.predict(features)` contract. PyTorch and ONNXRuntime validate `[frames, feature_dim]` before inference; RKNN reports a clear optional-backend error when its runtime is unavailable.
+
 ## Backend Consistency
 
 Run:
 
 ```powershell
-python scripts/17_compare_inference_backends.py --config configs/consistency_compare.yaml
+python scripts/17_compare_inference_backends.py --config configs/benchmarks/backend-consistency.yaml
 ```
 
 The report compares ONNXRuntime against PyTorch with:

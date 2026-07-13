@@ -3,7 +3,9 @@
 这里记录 MindFace-Lite 的功能设计。每个功能文档包含 overview、design decisions、implementation notes。
 
 - `environment-matrix.md`：环境职责矩阵。
-- `unified-cli.md`：统一 CLI 入口。
+- `unified-cli.md`：统一 CLI、方向键教学工作台、预设与兼容脚本设计。
+- `project-structure.md`：配置分组、模型产物边界、薄脚本和 Git 生成物规则。
+- `engineering-contracts.md`：配置、FeatureSpec、ModelBundle、后端、Pipeline 和实时队列契约。
 - `backend-consistency.md`：PyTorch、ONNXRuntime、RKNN 后端一致性对比。
 - `better-visual-renderer.md`：Stage 1.5 更精致的 OpenCV 口型渲染器。
 - `expressive-static-avatar.md`：Stage 1.6 静态人脸图 + OpenCV 嘴部 ROI 形变。

@@ -11,8 +11,8 @@
 ## 量化命令
 
 ```powershell
-python scripts/10_quantize_onnx.py --config configs/quantize_onnx.yaml
-python scripts/11_benchmark_quantized_onnx.py --config configs/benchmark_quantized_onnx.yaml
+python scripts/10_quantize_onnx.py --config configs/optimization/quantize-onnx.yaml
+python scripts/11_benchmark_quantized_onnx.py --config configs/benchmarks/benchmark-quantized-onnx.yaml
 ```
 
 输出：
@@ -25,9 +25,9 @@ outputs/reports/quantized_onnx_benchmark.json
 如果要量化已经训练好的 GRID MLP：
 
 ```powershell
-python scripts/05_export_onnx.py --config configs/export_grid_onnx.yaml
-python scripts/10_quantize_onnx.py --config configs/quantize_grid_onnx.yaml
-python scripts/11_benchmark_quantized_onnx.py --config configs/benchmark_grid_quantized_onnx.yaml
+python scripts/05_export_onnx.py --config configs/deployment/export-grid-onnx.yaml
+python scripts/10_quantize_onnx.py --config configs/optimization/quantize-grid-onnx.yaml
+python scripts/11_benchmark_quantized_onnx.py --config configs/benchmarks/benchmark-grid-quantized-onnx.yaml
 ```
 
 输出：
@@ -67,8 +67,8 @@ INT8 dynamic 平均延迟: 4.254 ms
 ## 剪枝命令
 
 ```powershell
-python scripts/12_prune_finetune.py --config configs/prune_finetune.yaml
-python scripts/13_benchmark_pruned.py --config configs/benchmark_pruned.yaml
+python scripts/12_prune_finetune.py --config configs/optimization/prune-finetune.yaml
+python scripts/13_benchmark_pruned.py --config configs/benchmarks/benchmark-pruned.yaml
 ```
 
 输出：
@@ -104,7 +104,7 @@ fine-tune val_loss epoch 2: 0.001520
 
 ## 常见错误
 
-- `ONNX file not found`：先运行 `python scripts/05_export_onnx.py --config configs/export_onnx.yaml`。
+- `ONNX file not found`：先运行 `python scripts/05_export_onnx.py --config configs/deployment/export-onnx.yaml`。
 - `onnxruntime quantization is unavailable`：安装 `onnxruntime`。
 - 剪枝后稀疏率变低：fine-tune 时没有保留 pruning mask。当前代码会在 fine-tune 期间保留 mask，最后再固化权重。
 - 剪枝不加速：非结构化稀疏不等于运行时加速，这是正常结果。

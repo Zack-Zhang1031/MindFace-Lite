@@ -9,6 +9,8 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
+from mindface.artifacts.model_bundle import ModelBundle, load_model_bundle, save_model_bundle
+from mindface.audio.spec import FeatureSpec
 from mindface.data.synthetic_dataset import MouthParameterDataset
 from mindface.experiments.tracking import (
     base_runtime_info,
@@ -80,6 +82,7 @@ def train_from_config(cfg: dict, logger) -> Path:
     train_cfg = cfg["train"]
     model_type = str(cfg["model"]["type"]).lower()
     model_cfg = dict(cfg["model"]["params"])
+    feature_spec = FeatureSpec.from_mapping(cfg.get("features"), model_cfg)
     sequence_mode = is_sequence_model(model_type)
 
     set_seed(int(train_cfg.get("seed", 42)))
@@ -107,6 +110,12 @@ def train_from_config(cfg: dict, logger) -> Path:
     optimizer = torch.optim.Adam(model.parameters(), lr=float(train_cfg.get("lr", 1e-3)))
     checkpoint_path = resolve_path(cfg["output"]["checkpoint_path"])
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    last_checkpoint_path = resolve_path(
+        cfg["output"].get(
+            "last_checkpoint_path",
+            checkpoint_path.with_name(f"{checkpoint_path.stem}.last{checkpoint_path.suffix}"),
+        )
+    )
     experiment_root = cfg["output"].get("experiment_root", "outputs/experiments")
     experiment_dir = make_experiment_dir(experiment_root, f"train_{model_type}")
     write_config_snapshot(experiment_dir, cfg)
@@ -119,9 +128,29 @@ def train_from_config(cfg: dict, logger) -> Path:
     logger.info("Experiment dir: %s", experiment_dir)
 
     best_val = float("inf")
+    start_epoch = 1
+    resumed_from_epoch = 0
+    resume_from = train_cfg.get("resume_from")
+    if resume_from:
+        resume_bundle = load_model_bundle(resume_from, map_location=device)
+        if resume_bundle.model_type != model_type or resume_bundle.model_config != model_cfg:
+            raise ValueError("Resume checkpoint model type/config does not match the training config")
+        if resume_bundle.feature_spec != feature_spec:
+            raise ValueError("Resume checkpoint FeatureSpec does not match the training config")
+        model.load_state_dict(resume_bundle.model_state)
+        if resume_bundle.optimizer_state is None:
+            raise ValueError("Resume checkpoint does not contain optimizer state")
+        optimizer.load_state_dict(resume_bundle.optimizer_state)
+        resumed_from_epoch = resume_bundle.epoch
+        start_epoch = resumed_from_epoch + 1
+        best_val = resume_bundle.best_val_loss
+        logger.info("Resuming from %s at epoch %d", resolve_path(resume_from), resumed_from_epoch)
+
     history: list[dict[str, float | int | bool]] = []
     epochs = int(train_cfg.get("epochs", 5))
-    for epoch in range(1, epochs + 1):
+    if start_epoch > epochs:
+        raise ValueError(f"Resume checkpoint epoch={resumed_from_epoch} already reached configured epochs={epochs}")
+    for epoch in range(start_epoch, epochs + 1):
         train_loss = _run_epoch(model, train_loader, loss_fn, device, optimizer)
         with torch.no_grad():
             val_loss = _run_epoch(model, val_loader, loss_fn, device)
@@ -140,18 +169,24 @@ def train_from_config(cfg: dict, logger) -> Path:
             }
         )
 
+        bundle = ModelBundle(
+            model_type=model_type,
+            model_config=model_cfg,
+            feature_spec=feature_spec,
+            model_state=model.state_dict(),
+            optimizer_state=optimizer.state_dict(),
+            epoch=epoch,
+            best_val_loss=best_val,
+            train_config=dict(train_cfg),
+            metadata={
+                "dataset_dir": str(dataset_dir),
+                "resumed_from_epoch": resumed_from_epoch,
+                "parameter_count": parameter_count,
+            },
+        )
+        save_model_bundle(bundle, last_checkpoint_path)
         if is_best:
-            torch.save(
-                {
-                    "model_type": model_type,
-                    "model_config": model_cfg,
-                    "model_state": model.state_dict(),
-                    "best_val_loss": best_val,
-                    "feature_config": cfg.get("features", {}),
-                    "train_config": train_cfg,
-                },
-                checkpoint_path,
-            )
+            save_model_bundle(bundle, checkpoint_path)
             logger.info("Saved checkpoint: %s", checkpoint_path)
 
     duration_sec = time.perf_counter() - started_at
@@ -160,9 +195,12 @@ def train_from_config(cfg: dict, logger) -> Path:
         "sequence_mode": sequence_mode,
         "dataset_dir": str(dataset_dir),
         "checkpoint_path": str(checkpoint_path),
+        "last_checkpoint_path": str(last_checkpoint_path),
         "train_items": len(train_ds),
         "val_items": len(val_ds),
         "epochs": epochs,
+        "start_epoch": start_epoch,
+        "resumed_from_epoch": resumed_from_epoch,
         "best_val_loss": float(best_val),
         "parameter_count": parameter_count,
         "device": str(device),

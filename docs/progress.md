@@ -2,6 +2,27 @@
 
 ## 已完成
 
+- 已实现 `mindface ui` 方向键教学工作台，按七个学习领域展示全部功能、用途、命令和环境要求。
+- 已将全部编号脚本改为 CLI 兼容跳转，真实执行逻辑迁入 `src/mindface/commands`，Pipeline 也统一调用 CLI。
+- 已为常用功能提供菜单预设，并允许配置型功能切换自定义 YAML。
+- 已新增 C++ configure/build/test/run 和 Python test/compile 的统一 CLI 命令。
+- 已实现全部 YAML schema 校验与 `mindface config list/show/validate`。
+- 已实现统一 `FeatureSpec`、版本化 `ModelBundle`、旧 checkpoint 迁移和 optimizer/epoch 恢复训练。
+- 已实现 PyTorch、ONNXRuntime、RKNN 的 `MouthPredictor` 后端接口。
+- 已实现 Pipeline dry-run、from/to 范围、产物跳过和 force 重跑。
+- 已将合成数据、benchmark、RKNN 流程和基础 Pipeline 从脚本下沉到包模块。
+- 已实现 GRID speaker-disjoint 切分和 manifest schema version。
+- 已实现 Python 有界队列的满载、丢帧、停止和异常传播，并加入并发测试。
+- 已升级 C++ runtime/apps/tests 结构、CMakePresets 和 CTest。
+- 已覆盖统一 CLI 的全部叶子命令。
+
+- 已将配置按 demos、datasets、training、inference、optimization、benchmarks、realtime、deployment 分组，并保留旧配置路径兼容。
+- 已扩充统一 CLI，覆盖全部有效 Python 脚本，同时保留早期平铺命令别名。
+- 已将 GRID 音频预处理和 expressive avatar 核心逻辑从编号脚本下沉到 `src/mindface`。
+- 已让健康检查解析 `requirements.txt` 并验证实际安装版本。
+- 已清理 Git 中的 `src/mindface_lite.egg-info`，并忽略后续 editable install 生成物。
+- 已区分 `models/external` 第三方模型和 `outputs/models` 生成模型。
+
 - 已创建 `src/mindface` 主包。
 - 已实现 RMS 规则口型 demo。
 - 已实现 Stage 1.5 better visual renderer，生成更精致的 OpenCV 2D 数字脸口型视频。
@@ -23,7 +44,7 @@
 - 已生成剪枝模型 `outputs/checkpoints/grid_mlp_mouth.pruned.pt`。
 - 已实现 GRID 视频 landmark 标签提取入口，依赖 `mediapipe`。
 - 已实现 GRID landmark 监督训练数据准备入口 `scripts/16_prepare_grid_landmark_dataset.py`。
-- 已新增 GRID landmark MLP 训练配置 `configs/train_grid_landmark_mlp.yaml`。
+- 已新增 GRID landmark MLP 训练配置 `configs/training/train-grid-landmark-mlp.yaml`。
 - 已实现真实 TTS 接入口，支持 `pyttsx3` 和 `edge_tts`。
 - 已实现麦克风 streaming RMS 口型入口，依赖 `sounddevice`。
 - 已实现 RKNN 转换/推理入口，依赖 RKNN 开发环境。

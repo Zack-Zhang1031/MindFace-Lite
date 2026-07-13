@@ -20,7 +20,7 @@ Run:
 
 ```powershell
 python scripts/00_generate_test_audio.py
-python scripts/01_6_expressive_avatar_demo.py --config configs/expressive_avatar_demo.yaml
+python scripts/01_6_expressive_avatar_demo.py --config configs/demos/expressive-avatar-demo.yaml
 ```
 
 Inputs:

@@ -45,8 +45,8 @@ raw GRID audio/video + extracted MediaPipe landmarks
 Train with:
 
 ```powershell
-python scripts/03_train_model.py --config configs/train_grid_mlp.yaml
-python scripts/03_train_model.py --config configs/train_grid_landmark_mlp.yaml
+python scripts/03_train_model.py --config configs/training/train-grid-mlp.yaml
+python scripts/03_train_model.py --config configs/training/train-grid-landmark-mlp.yaml
 ```
 
 ## Raw GRID Scan

@@ -13,10 +13,11 @@ pyyaml>=6.0.3,<7.0
 pandas>=2.2,<3.0
 matplotlib>=3.9,<4.0
 tqdm>=4.66,<5.0
+packaging>=24.0,<27.0
 
 # CUDA PyTorch for NVIDIA GPU training. This project was configured on RTX 4080.
 --extra-index-url https://download.pytorch.org/whl/cu128
 torch==2.11.0+cu128
 
 onnx>=1.22,<1.23
-onnxruntime>=1.26,<1.27
+onnxruntime>=1.23.2,<1.27

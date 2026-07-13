@@ -1,0 +1,26 @@
+dataset:
+  dir: data/synthetic_mouth
+features:
+  fps: 25
+  frame_ms: 40
+model:
+  type: lstm
+  params:
+    input_dim: 70
+    hidden_dim: 96
+    num_layers: 1
+    output_dim: 3
+    dropout: 0.0
+train:
+  resume_from: null
+  seed: 42
+  device: auto
+  epochs: 2
+  batch_size: 8
+  lr: 0.001
+  num_workers: 0
+output:
+  checkpoint_path: outputs/checkpoints/lstm_mouth.pt
+  last_checkpoint_path: outputs/checkpoints/lstm_mouth.last.pt
+  log_path: outputs/logs/train_lstm.log
+  experiment_root: outputs/experiments

@@ -17,9 +17,9 @@ Run after a checkpoint and ONNX model exist:
 
 ```powershell
 python scripts/00_generate_test_audio.py
-python scripts/03_train_model.py --config configs/train_mlp.yaml
-python scripts/05_export_onnx.py --config configs/export_onnx.yaml
-python scripts/17_compare_inference_backends.py --config configs/consistency_compare.yaml
+python scripts/03_train_model.py --config configs/training/train-mlp.yaml
+python scripts/05_export_onnx.py --config configs/deployment/export-onnx.yaml
+python scripts/17_compare_inference_backends.py --config configs/benchmarks/backend-consistency.yaml
 ```
 
 Unified CLI:

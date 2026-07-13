@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from mindface.artifacts.model_bundle import load_model_bundle
 from mindface.models.factory import build_model, is_sequence_model
 from mindface.utils.config import resolve_path
 
@@ -16,13 +17,13 @@ def export_checkpoint_to_onnx(checkpoint_path: str | Path, output_path: str | Pa
         raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    checkpoint = torch.load(checkpoint_path, map_location="cpu")
-    model_type = checkpoint["model_type"]
-    model = build_model(model_type, checkpoint["model_config"])
-    model.load_state_dict(checkpoint["model_state"])
+    bundle = load_model_bundle(checkpoint_path, map_location="cpu")
+    model_type = bundle.model_type
+    model = build_model(model_type, bundle.model_config)
+    model.load_state_dict(bundle.model_state)
     model.eval()
 
-    input_dim = int(checkpoint["model_config"].get("input_dim", 70))
+    input_dim = bundle.feature_spec.feature_dim
     if is_sequence_model(model_type):
         dummy = torch.randn(1, 16, input_dim, dtype=torch.float32)
         dynamic_axes = {"audio_features": {0: "batch", 1: "frames"}, "mouth_params": {0: "batch", 1: "frames"}}

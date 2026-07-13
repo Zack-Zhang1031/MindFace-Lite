@@ -10,18 +10,18 @@ PyTorch checkpoint -> ONNX -> RKNN conversion -> INT8 calibration -> RK3588 runt
 
 ```powershell
 python scripts/24_rknn_convert_and_infer.py --check-deps
-python scripts/24_rknn_convert_and_infer.py --config configs/rknn_deploy.yaml
+python scripts/24_rknn_convert_and_infer.py --config configs/deployment/rknn-deploy.yaml
 python scripts/25_device_tree_uboot_check.py --check-deps
-python scripts/25_device_tree_uboot_check.py --config configs/device_tree_uboot.yaml
+python scripts/25_device_tree_uboot_check.py --config configs/deployment/device-tree-uboot.yaml
 ```
 
 Implemented files:
 
 - `src/mindface/deploy/rknn_tools.py`
-- `configs/rknn_deploy.yaml`
+- `configs/deployment/rknn-deploy.yaml`
 - `scripts/24_rknn_convert_and_infer.py`
 - `tools/embedded/rk3588-mouth-uart-overlay.dts`
-- `configs/device_tree_uboot.yaml`
+- `configs/deployment/device-tree-uboot.yaml`
 - `scripts/25_device_tree_uboot_check.py`
 
 The RKNN script is real conversion code, but it still requires Rockchip's RKNN development environment. The Device Tree script can compile an overlay when `dtc` is available and prints U-Boot apply commands.

@@ -45,7 +45,7 @@ def check_sounddevice_available() -> tuple[bool, str]:
             False,
             "sounddevice is installed, but PortAudio cannot see any input microphone device. "
             f"Default device={getattr(sd.default, 'device', None)}. "
-            "Run: python scripts/23_mic_stream_rule_demo.py --list-devices. "
+            "Run: mindface realtime microphone --list-devices. "
             "Recommended fix: run microphone streaming in the Windows mindface-lite env. "
             "If you must use WSL, make sure Windows microphone permission is enabled and WSL audio input is exposed.",
         )

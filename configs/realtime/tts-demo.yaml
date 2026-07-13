@@ -1,0 +1,5 @@
+text: "MindFace Lite realtime mouth demo"
+audio:
+  sample_rate: 16000
+  output_path: outputs/audio/tts_demo.wav
+rule_config: configs/demos/rule-demo.yaml

@@ -25,14 +25,17 @@ python -m pip check
 ## 3. 最短演示路线
 
 ```powershell
-python -m mindface health
-python scripts/00_generate_test_audio.py
-python -m mindface rule-demo
-python -m mindface better-visual
-python -m mindface expressive-avatar
-python -m mindface train --config configs/train_mlp.yaml
-python -m mindface export-onnx --config configs/export_onnx.yaml
-python -m mindface compare-backends
+mindface ui
+mindface health
+mindface config validate --all
+mindface pipeline basic --dry-run
+mindface demo generate-audio
+mindface demo rule
+mindface demo better-visual
+mindface demo expressive-avatar
+mindface train --config configs/training/train-mlp.yaml
+mindface export onnx
+mindface benchmark backends
 ```
 
 重点查看：
@@ -49,7 +52,7 @@ outputs/reports/backend_consistency_report.json
 
 ## 4. Stage 1.6 视觉演示怎么讲
 
-`scripts/01_6_expressive_avatar_demo.py` 使用一张静态人脸图，通过 OpenCV 对嘴部局部 mesh 做形变。
+`mindface demo expressive-avatar` 使用一张静态人脸图，通过 OpenCV 对嘴部局部 mesh 做形变，核心实现位于 `src/mindface/visual/expressive_avatar.py`。
 
 它不再只是整体拉伸 ROI，而是用局部控制点影响嘴角、上唇、下唇和口腔中心区域；边缘用 feather mask 混合回原图，避免硬边。配置里的 viseme 事件模拟：
 
@@ -81,20 +84,20 @@ data/raw/grid/video
 先提取视频 landmark 标签：
 
 ```powershell
-python scripts/14_extract_grid_video_landmarks.py --check-deps
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml
+mindface data extract-landmarks --check-deps
+mindface data extract-landmarks --config configs/datasets/grid-video-landmarks.yaml
 ```
 
 再把视频 landmark target 和 WAV 音频特征对齐成训练 manifest：
 
 ```powershell
-python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml
+mindface data align-landmarks --config configs/datasets/prepare-grid-landmark.yaml
 ```
 
 最后训练真正以 landmark 标签为监督的 MLP：
 
 ```powershell
-python scripts/03_train_model.py --config configs/train_grid_landmark_mlp.yaml
+mindface train --config configs/training/train-grid-landmark-mlp.yaml
 ```
 
 输出：
@@ -105,14 +108,14 @@ outputs/checkpoints/grid_landmark_mlp_mouth.pt
 outputs/experiments/<timestamp>_train_mlp/
 ```
 
-注意：如果当前项目目录没有 `data/raw/grid`，这一步不能真实训练，只能验证脚本入口和错误提示。
+注意：如果当前项目目录没有 `data/raw/grid`，这一步不能真实训练，只能验证 CLI 入口和错误提示。
 
 ## 6. 后端一致性演示怎么讲
 
 运行：
 
 ```powershell
-python scripts/17_compare_inference_backends.py --config configs/consistency_compare.yaml
+mindface benchmark backends --config configs/benchmarks/backend-consistency.yaml
 ```
 
 报告：

@@ -1,4 +1,4 @@
-﻿# 运行顺序
+# 运行顺序
 
 所有命令都建议在项目根目录运行：
 
@@ -12,6 +12,8 @@ cd C:\Users\Administrator\Desktop\MindFace-Lite
 python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
+
+安装后以 `mindface ui` 作为日常入口。`scripts/*.py` 仅保留为旧教程和旧命令的兼容跳转，不再包含业务逻辑。
 
 当前 `requirements.txt` 默认安装 CUDA 版 PyTorch，适合 NVIDIA GPU 训练。如果没有 NVIDIA GPU，需要把其中的 `torch==2.11.0+cu128` 改成普通 `torch`。
 
@@ -41,13 +43,9 @@ python -m pip check
 ## 1. 先跑一键健康检查
 
 ```powershell
-python scripts/99_health_check.py
-```
-
-统一 CLI 等价命令：
-
-```powershell
-python -m mindface health
+mindface ui
+mindface health
+mindface config validate --all
 ```
 
 输出：
@@ -61,8 +59,8 @@ outputs/reports/health_check.json
 ## 2. 推荐先跑基础 Pipeline
 
 ```powershell
-python scripts/run_00_basic_pipeline.py
-python scripts/15_verify_basic_outputs.py
+mindface pipeline basic
+mindface verify
 ```
 
 当前基础 pipeline 会跑规则 demo、Stage 1.5 better visual renderer、Stage 1.6 expressive static avatar、基础训练、推理、ONNX 导出、ONNXRuntime、PyTorch/ONNX/RKNN 可选一致性对比、实时队列、benchmark，并默认加入 ONNX INT8 动态量化和量化 benchmark。
@@ -70,10 +68,13 @@ python scripts/15_verify_basic_outputs.py
 可选参数：
 
 ```powershell
-python scripts/run_00_basic_pipeline.py --skip-quantization
-python scripts/run_00_basic_pipeline.py --include-grid-compression
-python scripts/run_00_basic_pipeline.py --check-optional-deps
-python scripts/run_00_basic_pipeline.py --check-optional-deps-only
+mindface pipeline basic --skip-quantization
+mindface pipeline basic --include-grid-compression
+mindface pipeline basic --check-optional-deps
+mindface pipeline basic --check-optional-deps-only
+mindface pipeline basic --dry-run
+mindface pipeline basic --from-step train --to-step benchmark
+mindface pipeline basic --from-step train --to-step benchmark --force
 ```
 
 注意：这个基础 pipeline 不会预处理或训练全量 GRID 数据。`--include-grid-compression` 只会使用已经训练好的 GRID checkpoint 做导出、量化、剪枝和 benchmark。
@@ -81,29 +82,29 @@ python scripts/run_00_basic_pipeline.py --check-optional-deps-only
 如果想用统一 CLI 手动跑关键阶段：
 
 ```powershell
-python -m mindface rule-demo
-python -m mindface better-visual
-python -m mindface expressive-avatar
-python -m mindface train --config configs/train_mlp.yaml
-python -m mindface export-onnx --config configs/export_onnx.yaml
-python -m mindface compare-backends
+mindface demo rule
+mindface demo better-visual
+mindface demo expressive-avatar
+mindface train --config configs/training/train-mlp.yaml
+mindface export onnx
+mindface benchmark backends
 ```
 
 ## 3. 手动运行基础 Pipeline
 
 ```powershell
-python scripts/00_generate_test_audio.py
-python scripts/01_rule_mouth_demo.py --config configs/rule_demo.yaml
-python scripts/01_5_better_visual_demo.py --config configs/better_visual_demo.yaml
-python scripts/01_6_expressive_avatar_demo.py --config configs/expressive_avatar_demo.yaml
-python scripts/02_generate_synthetic_dataset.py --config configs/synthetic_dataset.yaml
-python scripts/03_train_model.py --config configs/train_mlp.yaml
-python scripts/04_infer_pytorch.py --config configs/infer_pytorch.yaml
-python scripts/05_export_onnx.py --config configs/export_onnx.yaml
-python scripts/06_infer_onnx.py --config configs/infer_onnx.yaml
-python scripts/07_realtime_rule_demo.py --config configs/realtime_rule.yaml
-python scripts/08_benchmark.py --config configs/benchmark.yaml
-python scripts/15_verify_basic_outputs.py
+mindface demo generate-audio
+mindface demo rule --config configs/demos/rule-demo.yaml
+mindface demo better-visual --config configs/demos/better-visual-demo.yaml
+mindface demo expressive-avatar --config configs/demos/expressive-avatar-demo.yaml
+mindface data synthetic --config configs/datasets/synthetic-dataset.yaml
+mindface train --config configs/training/train-mlp.yaml
+mindface infer pytorch --config configs/inference/infer-pytorch.yaml
+mindface export onnx --config configs/deployment/export-onnx.yaml
+mindface infer onnx --config configs/inference/infer-onnx.yaml
+mindface realtime queue --config configs/realtime/realtime-rule.yaml
+mindface benchmark runtime --config configs/benchmarks/benchmark.yaml
+mindface verify
 ```
 
 训练脚本会自动生成实验追踪目录：
@@ -115,12 +116,14 @@ outputs/experiments/<timestamp>_train_<model>/
 └── metrics.json
 ```
 
+恢复训练：编辑训练 YAML，把 `train.resume_from` 设置为对应的 `output.last_checkpoint_path`，并将 `train.epochs` 改成新的总 epoch 数。每个训练配置默认写入 best `.pt` 和 resumable `.last.pt`。
+
 ## 4. 可选：训练其他模型
 
 ```powershell
-python scripts/03_train_model.py --config configs/train_lstm.yaml
-python scripts/03_train_model.py --config configs/train_tcn.yaml
-python scripts/03_train_model.py --config configs/train_transformer.yaml
+mindface train --config configs/training/train-lstm.yaml
+mindface train --config configs/training/train-tcn.yaml
+mindface train --config configs/training/train-transformer.yaml
 ```
 
 ## 5. GRID 小样本 Debug 预处理和训练
@@ -128,8 +131,8 @@ python scripts/03_train_model.py --config configs/train_transformer.yaml
 建议在全量 GRID 之前先跑这个：
 
 ```powershell
-python scripts/09_prepare_grid_dataset.py --config configs/prepare_grid.yaml --max-samples 8 --output-dir data/processed/grid_mouth_debug
-python scripts/03_train_model.py --config configs/train_grid_debug_mlp.yaml
+mindface data prepare-grid --config configs/datasets/prepare-grid.yaml --max-samples 8 --output-dir data/processed/grid_mouth_debug
+mindface train --config configs/training/train-grid-debug-mlp.yaml
 ```
 
 ## 6. 全量 GRID 音频预处理和训练
@@ -137,8 +140,8 @@ python scripts/03_train_model.py --config configs/train_grid_debug_mlp.yaml
 这一步会扫描并处理 `data/raw/grid` 下的 GRID 原始音频，耗时和磁盘占用都会更高。
 
 ```powershell
-python scripts/09_prepare_grid_dataset.py --config configs/prepare_grid.yaml
-python scripts/03_train_model.py --config configs/train_grid_mlp.yaml
+mindface data prepare-grid --config configs/datasets/prepare-grid.yaml
+mindface train --config configs/training/train-grid-mlp.yaml
 ```
 
 当前标签是基于 RMS 规则生成的伪嘴型标签。真正的视频嘴型标签需要后续实现 landmark / blendshape 提取。
@@ -155,22 +158,22 @@ data/raw/grid/video
 先提取视频 landmark：
 
 ```powershell
-python scripts/14_extract_grid_video_landmarks.py --check-deps
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml --max-videos 8 --output-dir data/processed/grid_video_landmarks_debug
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml
+mindface data extract-landmarks --check-deps
+mindface data extract-landmarks --config configs/datasets/grid-video-landmarks.yaml --max-videos 8 --output-dir data/processed/grid_video_landmarks_debug
+mindface data extract-landmarks --config configs/datasets/grid-video-landmarks.yaml
 ```
 
 再把 `data/processed/grid_video_landmarks` 中的 target 和 `data/raw/grid/audio` 中的 WAV 对齐成训练集：
 
 ```powershell
-python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml --max-samples 8
-python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml
+mindface data align-landmarks --config configs/datasets/prepare-grid-landmark.yaml --max-samples 8
+mindface data align-landmarks --config configs/datasets/prepare-grid-landmark.yaml
 ```
 
 训练真正以 landmark 参数为监督的 MLP：
 
 ```powershell
-python scripts/03_train_model.py --config configs/train_grid_landmark_mlp.yaml
+mindface train --config configs/training/train-grid-landmark-mlp.yaml
 ```
 
 输出：
@@ -187,29 +190,29 @@ outputs/checkpoints/grid_landmark_mlp_mouth.pt
 ONNX INT8 动态量化和对比 benchmark：
 
 ```powershell
-python scripts/10_quantize_onnx.py --config configs/quantize_onnx.yaml
-python scripts/11_benchmark_quantized_onnx.py --config configs/benchmark_quantized_onnx.yaml
+mindface optimize quantize --config configs/optimization/quantize-onnx.yaml
+mindface optimize benchmark-quantized --config configs/benchmarks/benchmark-quantized-onnx.yaml
 ```
 
 GRID MLP 量化：
 
 ```powershell
-python scripts/05_export_onnx.py --config configs/export_grid_onnx.yaml
-python scripts/10_quantize_onnx.py --config configs/quantize_grid_onnx.yaml
-python scripts/11_benchmark_quantized_onnx.py --config configs/benchmark_grid_quantized_onnx.yaml
+mindface export onnx --config configs/deployment/export-grid-onnx.yaml
+mindface optimize quantize --config configs/optimization/quantize-grid-onnx.yaml
+mindface optimize benchmark-quantized --config configs/benchmarks/benchmark-grid-quantized-onnx.yaml
 ```
 
 PyTorch 剪枝、fine-tune 和对比 benchmark：
 
 ```powershell
-python scripts/12_prune_finetune.py --config configs/prune_finetune.yaml
-python scripts/13_benchmark_pruned.py --config configs/benchmark_pruned.yaml
+mindface optimize prune --config configs/optimization/prune-finetune.yaml
+mindface optimize benchmark-pruned --config configs/benchmarks/benchmark-pruned.yaml
 ```
 
 PyTorch、ONNXRuntime、RKNN 可选一致性对比：
 
 ```powershell
-python scripts/17_compare_inference_backends.py --config configs/consistency_compare.yaml
+mindface benchmark backends --config configs/benchmarks/backend-consistency.yaml
 ```
 
 报告：
@@ -223,25 +226,25 @@ outputs/reports/backend_consistency_report.json
 先检查可选依赖：
 
 ```powershell
-python scripts/14_extract_grid_video_landmarks.py --check-deps
+mindface data extract-landmarks --check-deps
 ```
 
 小样本调试：
 
 ```powershell
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml --max-videos 8 --output-dir data/processed/grid_video_landmarks_debug
+mindface data extract-landmarks --config configs/datasets/grid-video-landmarks.yaml --max-videos 8 --output-dir data/processed/grid_video_landmarks_debug
 ```
 
 全量提取：
 
 ```powershell
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml
+mindface data extract-landmarks --config configs/datasets/grid-video-landmarks.yaml
 ```
 
 生成或刷新已有 landmark 的质量报告：
 
 ```powershell
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml --quality-only
+mindface data extract-landmarks --config configs/datasets/grid-video-landmarks.yaml --quality-only
 ```
 
 报告输出：
@@ -253,8 +256,8 @@ outputs/reports/grid_video_landmark_quality.json
 ## 9. TTS-like Demo
 
 ```powershell
-python scripts/19_tts_generate_wav.py --config configs/tts_demo.yaml
-python scripts/20_tts_mouth_demo.py --config configs/tts_demo.yaml
+mindface tts pseudo-generate --config configs/realtime/tts-demo.yaml
+mindface tts pseudo-demo --config configs/realtime/tts-demo.yaml
 ```
 
 ## 10. 真实 TTS 与麦克风 Streaming
@@ -262,16 +265,16 @@ python scripts/20_tts_mouth_demo.py --config configs/tts_demo.yaml
 真实 TTS：
 
 ```powershell
-python scripts/21_real_tts_generate_wav.py --check-deps
-python scripts/21_real_tts_generate_wav.py --config configs/real_tts.yaml
-python scripts/22_real_tts_mouth_demo.py --config configs/real_tts.yaml
+mindface tts generate --check-deps
+mindface tts generate --config configs/realtime/real-tts.yaml
+mindface tts demo --config configs/realtime/real-tts.yaml
 ```
 
 麦克风 streaming：
 
 ```powershell
-python scripts/23_mic_stream_rule_demo.py --check-deps
-python scripts/23_mic_stream_rule_demo.py --config configs/mic_stream.yaml --duration-sec 10 --show
+mindface realtime microphone --check-deps
+mindface realtime microphone --config configs/realtime/mic-stream.yaml --duration-sec 10 --show
 ```
 
 ## 11. RKNN 与 Device Tree / U-Boot
@@ -279,8 +282,8 @@ python scripts/23_mic_stream_rule_demo.py --config configs/mic_stream.yaml --dur
 Windows 环境只做依赖检查或 dry-run：
 
 ```powershell
-python scripts/24_rknn_convert_and_infer.py --check-deps
-python scripts/24_rknn_convert_and_infer.py --config configs/rknn_deploy.yaml --dry-run
+mindface deploy rknn --check-deps
+mindface deploy rknn --config configs/deployment/rknn-deploy.yaml --dry-run
 ```
 
 WSL/Ubuntu `mindface-rknn` 环境做真实 RKNN 转换：
@@ -290,8 +293,8 @@ cd /mnt/c/Users/Administrator/Desktop/MindFace-Lite
 source ~/.venvs/mindface-rknn/bin/activate
 python -m pip install -r requirements-rknn.txt
 python -m pip check
-python scripts/24_rknn_convert_and_infer.py --check-deps
-python scripts/24_rknn_convert_and_infer.py --config configs/rknn_deploy.yaml
+mindface deploy rknn --check-deps
+mindface deploy rknn --config configs/deployment/rknn-deploy.yaml
 ```
 
 RKNN dry-run 和真实转换都会写部署报告：
@@ -303,18 +306,19 @@ outputs/reports/rknn_deploy_report.json
 Device Tree / U-Boot：
 
 ```powershell
-python scripts/25_device_tree_uboot_check.py --check-deps
-python scripts/25_device_tree_uboot_check.py --config configs/device_tree_uboot.yaml
+mindface deploy device-tree --check-deps
+mindface deploy device-tree --config configs/deployment/device-tree-uboot.yaml
 ```
 
 ## 12. C++ Demo
 
 ```powershell
-cmake -S cpp -B build/cpp -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe
-cmake --build build/cpp
-build\cpp\queue_demo.exe
-build\cpp\udp_sender.exe outputs\logs\pytorch_mlp_params.csv 127.0.0.1 9000 25
-build\cpp\serial_sender.exe outputs\logs\serial_output.txt outputs\logs\pytorch_mlp_params.csv 25
+mindface cpp configure
+mindface cpp build
+mindface cpp test
+mindface cpp run queue-demo
+mindface cpp run udp-sender -- outputs\logs\pytorch_mlp_params.csv 127.0.0.1 9000 25
+mindface cpp run serial-sender -- outputs\logs\serial_output.txt outputs\logs\pytorch_mlp_params.csv 25
 ```
 
 ## 13. 自动测试

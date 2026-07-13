@@ -18,11 +18,11 @@ data/processed/grid_video_landmarks/manifest.csv
 cd C:\Users\Administrator\Desktop\MindFace-Lite
 conda activate mindface-lite
 
-python scripts/14_extract_grid_video_landmarks.py --config configs/grid_video_landmarks.yaml
-python scripts/16_prepare_grid_landmark_dataset.py --config configs/prepare_grid_landmark.yaml
-python scripts/03_train_model.py --config configs/train_grid_landmark_mlp.yaml
-python scripts/05_export_onnx.py --config configs/export_onnx.yaml
-python scripts/17_compare_inference_backends.py --config configs/consistency_compare.yaml
+python scripts/14_extract_grid_video_landmarks.py --config configs/datasets/grid-video-landmarks.yaml
+python scripts/16_prepare_grid_landmark_dataset.py --config configs/datasets/prepare-grid-landmark.yaml
+python scripts/03_train_model.py --config configs/training/train-grid-landmark-mlp.yaml
+python scripts/05_export_onnx.py --config configs/deployment/export-onnx.yaml
+python scripts/17_compare_inference_backends.py --config configs/benchmarks/backend-consistency.yaml
 ```
 
 ## Dataset Summary
