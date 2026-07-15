@@ -3,11 +3,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-import yaml
-
 from mindface.commands import run_command
-from mindface.configuration.schema import validate_all_configs, validate_config
-from mindface.utils.config import load_yaml, project_root, resolve_path
 
 
 def _add_leaf(
@@ -64,6 +60,36 @@ def build_parser() -> argparse.ArgumentParser:
     config_validate.add_argument("path", nargs="?", default=None)
     config_validate.add_argument("--all", action="store_true", dest="validate_all")
     config_validate.set_defaults(handler=_run_config_command, config_action="validate")
+
+    environment = _add_group(commands, "env", "Inspect, install, and repair project environments.")
+    for name, command_id, full_help in (
+        ("status", "env.status", "Show lightweight Windows and WSL environment status."),
+        ("check", "env.check", "Run full Windows and WSL dependency checks."),
+    ):
+        environment_check = _add_leaf(environment, name, command_id, full_help)
+        environment_check.add_argument("--distro", default="Ubuntu")
+        environment_check.add_argument("--output", default="outputs/reports/environment-matrix.json")
+    install_windows = _add_leaf(
+        environment,
+        "install-windows",
+        "env.install-windows",
+        "Create or repair the Windows Conda training environment.",
+    )
+    install_windows.add_argument("--source", choices=["official", "tsinghua", "aliyun"], default="official")
+    install_windows.add_argument("--yes", action="store_true")
+    install_windows.add_argument("--dry-run", action="store_true")
+    install_windows.add_argument("--log-path", default="outputs/logs/environment-install-windows.log")
+    install_wsl = _add_leaf(
+        environment,
+        "install-wsl",
+        "env.install-wsl",
+        "Create or repair the Ubuntu RKNN environment.",
+    )
+    install_wsl.add_argument("--distro", default="Ubuntu")
+    install_wsl.add_argument("--source", choices=["official", "tsinghua", "aliyun"], default="official")
+    install_wsl.add_argument("--yes", action="store_true")
+    install_wsl.add_argument("--dry-run", action="store_true")
+    install_wsl.add_argument("--log-path", default="outputs/logs/environment-install-wsl.log")
 
     pipeline = _add_group(commands, "pipeline", "Run staged pipelines.")
     basic = _add_leaf(pipeline, "basic", "pipeline.basic", "Run the basic validation pipeline.")
@@ -374,6 +400,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _run_config_command(args: argparse.Namespace) -> int:
+    import yaml
+
+    from mindface.configuration.schema import validate_all_configs, validate_config
+    from mindface.utils.config import load_yaml, project_root, resolve_path
+
     if args.config_action == "list":
         for path in sorted(resolve_path("configs").rglob("*.yaml")):
             print(path.relative_to(project_root()).as_posix())

@@ -3,13 +3,20 @@ from __future__ import annotations
 import pytest
 
 from mindface.cli import build_parser
-from mindface.terminal_ui import _select, action_items, command_with_custom_config, menu_groups
+from mindface.terminal_ui import (
+    _select,
+    action_items,
+    command_with_custom_config,
+    command_with_source,
+    menu_groups,
+)
 
 
 def test_terminal_ui_catalog_exposes_every_learning_area() -> None:
     group_ids = {group.id for group in menu_groups()}
 
     assert group_ids == {
+        "environment",
         "quick-start",
         "data",
         "training",
@@ -44,3 +51,17 @@ def test_direction_keys_move_selection(capsys: pytest.CaptureFixture[str]) -> No
 
     assert selected == 1
     assert "↑/↓" in capsys.readouterr().out
+
+
+def test_environment_install_actions_are_confirmed_and_choose_source() -> None:
+    item = next(item for item in action_items() if item.id == "install-windows")
+
+    assert item.installer is True
+    assert "--yes" in item.argv
+    assert command_with_source(item, "tsinghua") == (
+        "env",
+        "install-windows",
+        "--source",
+        "tsinghua",
+        "--yes",
+    )

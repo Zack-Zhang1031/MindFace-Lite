@@ -3,6 +3,7 @@
 这里记录 MindFace-Lite 的功能设计。每个功能文档包含 overview、design decisions、implementation notes。
 
 - `environment-matrix.md`：环境职责矩阵。
+- `environment-installer.md`：Windows/WSL 环境安装计划、下载源、日志和完整检查。
 - `unified-cli.md`：统一 CLI、方向键教学工作台、预设与兼容脚本设计。
 - `project-structure.md`：配置分组、模型产物边界、薄脚本和 Git 生成物规则。
 - `engineering-contracts.md`：配置、FeatureSpec、ModelBundle、后端、Pipeline 和实时队列契约。

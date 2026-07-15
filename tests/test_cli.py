@@ -14,6 +14,10 @@ CLI_LEAF_CASES: list[tuple[list[str], str | None]] = [
     (["config", "list"], None),
     (["config", "show", "configs/training/train-mlp.yaml"], None),
     (["config", "validate", "--all"], None),
+    (["env", "status"], "env.status"),
+    (["env", "check"], "env.check"),
+    (["env", "install-windows"], "env.install-windows"),
+    (["env", "install-wsl"], "env.install-wsl"),
     (["pipeline", "basic"], "pipeline.basic"),
     (["verify"], "verify"),
     (["demo", "generate-audio"], "demo.generate-audio"),
@@ -83,6 +87,7 @@ def test_cli_leaf_matrix_covers_every_parser_leaf() -> None:
     discovered = _discover_leaf_commands(cli.build_parser())
     grouped = {
         "config",
+        "env",
         "pipeline",
         "demo",
         "data",

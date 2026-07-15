@@ -13,6 +13,7 @@ class ActionItem:
     description: str
     argv: tuple[str, ...]
     environment: str
+    installer: bool = False
 
     @property
     def supports_custom_config(self) -> bool:
@@ -33,8 +34,10 @@ def _action(
     description: str,
     argv: Sequence[str],
     environment: str = "Windows / WSL 基础环境",
+    *,
+    installer: bool = False,
 ) -> ActionItem:
-    return ActionItem(item_id, title, description, tuple(argv), environment)
+    return ActionItem(item_id, title, description, tuple(argv), environment, installer)
 
 
 def menu_groups() -> tuple[MenuGroup, ...]:
@@ -43,6 +46,43 @@ def menu_groups() -> tuple[MenuGroup, ...]:
     wsl_rknn = "WSL mindface-rknn；需要 Rockchip RKNN-Toolkit2"
     linux_bsp = "Linux / RK3588 BSP 环境；需要 dtc 和板级工具"
     return (
+        MenuGroup(
+            "environment",
+            "环境与安装",
+            "检查、创建或修复 Windows 训练环境和 Ubuntu RKNN 环境。",
+            (
+                _action(
+                    "environment-status",
+                    "查看环境状态",
+                    "快速检查 Conda、mindface-lite、WSL Ubuntu 和 RKNN venv 是否存在。",
+                    ("env", "status", "--distro", "Ubuntu"),
+                    "Windows PowerShell；可同时检查 WSL2 Ubuntu",
+                ),
+                _action(
+                    "environment-check",
+                    "完整检查两个环境",
+                    "检查 Python 包、CUDA/GPU、RKNN、pip、CMake、dtc 和交叉编译器。",
+                    ("env", "check", "--distro", "Ubuntu"),
+                    "Windows PowerShell；WSL 发行版名称为 Ubuntu",
+                ),
+                _action(
+                    "install-windows",
+                    "安装或修复 Windows 环境",
+                    "复用 mindface-lite；缺失时创建 Python 3.10，并安装 core、optional、dev。",
+                    ("env", "install-windows", "--source", "official", "--yes"),
+                    "Windows + Conda；现有环境不会被删除",
+                    installer=True,
+                ),
+                _action(
+                    "install-wsl",
+                    "安装或修复 WSL RKNN 环境",
+                    "管理 Ubuntu 的 ~/.venvs/mindface-rknn，并安装 apt、RKNN 和交叉编译工具。",
+                    ("env", "install-wsl", "--distro", "Ubuntu", "--source", "official", "--yes"),
+                    "Windows + WSL2 Ubuntu；sudo 阶段需要输入 Linux 密码",
+                    installer=True,
+                ),
+            ),
+        ),
         MenuGroup(
             "quick-start",
             "快速体验",
@@ -167,6 +207,15 @@ def command_with_custom_config(item: ActionItem, path: str) -> tuple[str, ...]:
     return tuple(command)
 
 
+def command_with_source(item: ActionItem, source: str) -> tuple[str, ...]:
+    if "--source" not in item.argv:
+        raise ValueError(f"Action '{item.id}' does not accept a download source")
+    command = list(item.argv)
+    index = command.index("--source")
+    command[index + 1] = source
+    return tuple(command)
+
+
 def _read_key() -> str:
     if os.name == "nt":
         import msvcrt
@@ -215,8 +264,8 @@ def _select(title: str, labels: Sequence[str], read_key: Callable[[], str] = _re
 
 
 def _run_action(item: ActionItem, execute: Callable[[list[str]], int]) -> None:
-    labels = ["运行默认预设"]
-    if item.supports_custom_config:
+    labels = ["开始安装（确认后自动执行）", "仅查看安装计划"] if item.installer else ["运行默认预设"]
+    if item.supports_custom_config and not item.installer:
         labels.append("指定自定义 YAML")
     labels.append("返回")
     selection = _select(
@@ -226,7 +275,14 @@ def _run_action(item: ActionItem, execute: Callable[[list[str]], int]) -> None:
     if selection is None or labels[selection] == "返回":
         return
     command = item.argv
-    if labels[selection] == "指定自定义 YAML":
+    if item.installer:
+        source_index = _select("选择本次 Python 下载源", ["官方源", "清华源", "阿里云源"])
+        if source_index is None:
+            return
+        command = command_with_source(item, ("official", "tsinghua", "aliyun")[source_index])
+        if labels[selection] == "仅查看安装计划":
+            command = (*command, "--dry-run")
+    elif labels[selection] == "指定自定义 YAML":
         path = input("\n请输入 YAML 路径：").strip()
         if not path:
             return

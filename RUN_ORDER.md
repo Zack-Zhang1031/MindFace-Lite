@@ -8,6 +8,31 @@ cd C:\Users\Administrator\Desktop\MindFace-Lite
 
 ## 0. 安装环境
 
+已经安装过 editable package 时，推荐使用方向键菜单：
+
+```powershell
+conda activate mindface-lite
+mindface ui
+```
+
+首次安装还没有 `mindface` 命令时：
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m mindface ui
+```
+
+进入“环境与安装”，先运行完整检查。命令行等价入口：
+
+```powershell
+mindface env status --distro Ubuntu
+mindface env check --distro Ubuntu
+mindface env install-windows --source official --dry-run
+mindface env install-wsl --distro Ubuntu --source official --dry-run
+```
+
+确认计划后去掉 `--dry-run`。安装器只创建缺失环境或修复已有环境，不自动删除；WSL 的 `sudo apt` 阶段会要求输入 Ubuntu 密码。
+
 ```powershell
 python -m pip install -r requirements.txt
 python -m pip install -e .

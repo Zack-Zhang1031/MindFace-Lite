@@ -7,6 +7,10 @@ from collections.abc import Callable
 
 _COMMAND_HANDLERS: dict[str, str] = {
     "health": "mindface.commands.project:run_health",
+    "env.status": "mindface.commands.environment:run_status",
+    "env.check": "mindface.commands.environment:run_check",
+    "env.install-windows": "mindface.commands.environment:run_install_windows",
+    "env.install-wsl": "mindface.commands.environment:run_install_wsl",
     "verify": "mindface.commands.project:run_verify",
     "pipeline.basic": "mindface.commands.project:run_basic_pipeline",
     "project.test": "mindface.commands.project:run_tests",

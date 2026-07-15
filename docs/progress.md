@@ -2,7 +2,10 @@
 
 ## 已完成
 
-- 已实现 `mindface ui` 方向键教学工作台，按七个学习领域展示全部功能、用途、命令和环境要求。
+- 已在 `mindface ui` 增加环境与安装模块，可从 Windows 检查、创建或修复 `mindface-lite` 和 WSL Ubuntu `mindface-rknn`。
+- 已实现官方、清华、阿里云 pip 源逐次选择、安装计划 dry-run、一次确认、逐步日志和失败停止。
+- 已实现 Windows/WSL 完整环境矩阵报告，覆盖 CUDA/GPU、Python 包、RKNN、CMake、dtc 和 ARM64 交叉编译器。
+- 已实现 `mindface ui` 方向键教学工作台，按八个学习领域展示全部功能、用途、命令和环境要求。
 - 已将全部编号脚本改为 CLI 兼容跳转，真实执行逻辑迁入 `src/mindface/commands`，Pipeline 也统一调用 CLI。
 - 已为常用功能提供菜单预设，并允许配置型功能切换自定义 YAML。
 - 已新增 C++ configure/build/test/run 和 Python test/compile 的统一 CLI 命令。
